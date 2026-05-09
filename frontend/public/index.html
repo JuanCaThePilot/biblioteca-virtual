@@ -152,7 +152,7 @@
     }
     .rc-name { font-weight: 900; color: white; }
     .rc-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .rc-desc { font-size: 14px; line-height: 1.75; color: var(--muted); margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .rc-desc { font-size: 14px; line-height: 1.75; color: var(--muted); margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-clamp: 2; }
     .rc-footer { display: flex; justify-content: space-between; align-items: center; }
     .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 112px 16px 32px; }
     .auth-card { width: 100%; max-width: 448px; border-radius: 2rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.07); backdrop-filter: blur(48px); padding: 24px; }
@@ -370,6 +370,21 @@
   </div>
 </div>
 
+<!-- MODAL: EDITAR DESCRIPCIÓN (Faltaba este modal - el botón "Editar" no funcionaba porque no existía) -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-header"><h2>Editar descripción</h2><button class="modal-close" onclick="closeEditModal()">×</button></div>
+    <div class="alert alert-error" id="edit-error"></div>
+    <div class="form-group"><label>Recurso</label><input class="field" id="edit-name" disabled></div>
+    <div class="form-group"><label>Nueva descripción</label><textarea class="field" id="edit-desc-text" style="min-height:120px"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDescription()" id="btn-save-desc">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
 <div id="toast"></div>
 
 <script>
@@ -646,10 +661,62 @@ async function adminAction(action, id) {
   } catch { toast('Error'); }
 }
 
-function editDesc(id, desc) {
+// ─── EDITAR DESCRIPCIÓN (modal que no existía - el botón "Editar" estaba roto) ───
+function editDesc(id, desc, nombre) {
+  // Guarda el ID del recurso a editar
   editingId = id;
-  document.getElementById('edit-desc-text').value = desc;
+  // Muestra el nombre del recurso en el modal (si se pasó)
+  const nameInput = document.getElementById('edit-name');
+  if (nameInput && nombre) nameInput.value = nombre;
+  // Carga la descripción actual en el textarea
+  document.getElementById('edit-desc-text').value = desc || '';
+  // Abre el modal
   document.getElementById('modal-edit').classList.add('open');
+}
+
+function closeEditModal() {
+  // Limpia el ID de edición y cierra el modal
+  editingId = null;
+  document.getElementById('modal-edit').classList.remove('open');
+}
+
+// Guarda la descripción editada llamando a la API del backend
+async function saveDescription() {
+  const descripcion = document.getElementById('edit-desc-text').value.trim();
+  if (!editingId) return;
+  if (!descripcion) {
+    showAlert('edit-error', 'La descripción no puede estar vacía.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-desc');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  showAlert('edit-error', '');
+
+  try {
+    // PATCH /api/admin/recursos/:id/descripcion
+    const r = await fetch(API + '/admin/recursos/' + editingId + '/descripcion', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ descripcion })
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      showAlert('edit-error', d.error || 'No se pudo guardar.');
+      return;
+    }
+    toast(d.mensaje || 'Descripción actualizada');
+    closeEditModal();
+    // Refresca las listas para ver el cambio
+    loadPublicados();
+    loadResources();
+  } catch {
+    showAlert('edit-error', 'Error de conexión.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
+  }
 }
 
 function showAdmin(section, el) {
