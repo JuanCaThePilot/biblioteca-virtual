@@ -10,6 +10,9 @@ import { UploadModal } from './components/resources/UploadModal'
 import { useAdmin } from './hooks/useAdmin'
 import { useAuth } from './hooks/useAuth'
 import { useResources } from './hooks/useResources'
+import { SpotlightCard } from './components/motion/SpotlightCard'
+import { MotionSection, Reveal } from './components/motion/MotionSection'
+import { pageTransition } from './utils/motion'
 
 export default function App() {
   const [page, setPage] = useState('home')
@@ -61,7 +64,7 @@ export default function App() {
         }}
       />
       <AnimatePresence mode="wait">
-        <motion.div key={page} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.28 }}>
+        <motion.div key={page} {...pageTransition}>
           {screen}
         </motion.div>
       </AnimatePresence>
@@ -79,24 +82,36 @@ function BentoFeatures() {
   ]
 
   return (
-    <section className="section-shell py-12">
+    <MotionSection className="section-shell py-12">
+      <Reveal className="mb-8">
+        <p className="text-sm font-black uppercase tracking-[0.24em] text-cyan">Plataforma SaaS académica</p>
+        <h2 className="mt-3 max-w-3xl text-4xl font-black text-white sm:text-5xl">Un flujo moderno para publicar, revisar y descargar recursos.</h2>
+      </Reveal>
       <div className="grid gap-4 lg:grid-cols-3">
         {items.map(([title, text, span], index) => (
-          <motion.div
+          <SpotlightCard
             key={title}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ delay: index * 0.08 }}
-            whileHover={{ y: -6 }}
-            className={`glass relative overflow-hidden rounded-[2rem] p-6 ${span}`}
+            className={`min-h-48 p-6 ${span}`}
           >
             <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gradient-to-br from-violet/30 to-cyan/10 blur-2xl" />
             <h3 className="relative text-xl font-black text-white">{title}</h3>
             <p className="relative mt-3 max-w-2xl text-sm leading-6 text-slate-400">{text}</p>
-          </motion.div>
+            <div className="relative mt-8 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-violet to-cyan"
+                initial={{ width: '12%' }}
+                whileInView={{ width: `${48 + index * 12}%` }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, delay: 0.15 + index * 0.08 }}
+              />
+            </div>
+          </SpotlightCard>
         ))}
       </div>
-    </section>
+    </MotionSection>
   )
 }

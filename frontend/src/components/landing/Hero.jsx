@@ -1,12 +1,18 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, ShieldCheck, Sparkles, UploadCloud } from 'lucide-react'
+import { lazy, Suspense } from 'react'
 import { AnimatedCounter } from '../ui/AnimatedCounter'
 import { Button } from '../ui/Button'
-import { fadeUp, stagger } from '../../utils/motion'
+import { Magnetic } from '../motion/Magnetic'
+import { TiltCard } from '../motion/TiltCard'
+import { fadeUp, slideRight, stagger } from '../../utils/motion'
+
+const HologramScene = lazy(() => import('../three/HologramScene').then((module) => ({ default: module.HologramScene })))
 
 export function Hero({ stats, onExplore, onUpload }) {
   const { scrollY } = useScroll()
   const y = useTransform(scrollY, [0, 700], [0, 90])
+  const yDeep = useTransform(scrollY, [0, 700], [0, 150])
   const rotate = useTransform(scrollY, [0, 700], [0, -5])
 
   return (
@@ -24,12 +30,16 @@ export function Hero({ stats, onExplore, onUpload }) {
             Centraliza scripts, instaladores, manuales y plantillas con autenticación, moderación administrativa, búsqueda avanzada y descargas desde Storage.
           </motion.p>
           <motion.div variants={fadeUp} className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button className="btn-primary min-h-14 px-6 text-base" onClick={onExplore}>
-              Explorar recursos <ArrowRight size={18} />
-            </Button>
-            <Button className="min-h-14 px-6 text-base" onClick={onUpload}>
-              <UploadCloud size={18} /> Subir recurso
-            </Button>
+            <Magnetic>
+              <Button className="btn-primary min-h-14 px-6 text-base" onClick={onExplore}>
+                Explorar recursos <ArrowRight className="transition group-hover:translate-x-1" size={18} />
+              </Button>
+            </Magnetic>
+            <Magnetic>
+              <Button className="min-h-14 px-6 text-base" onClick={onUpload}>
+                <UploadCloud size={18} /> Subir recurso
+              </Button>
+            </Magnetic>
           </motion.div>
           <motion.div variants={fadeUp} className="mt-7 flex flex-wrap gap-3 text-sm text-slate-300">
             {['JWT Auth', 'Panel admin', 'Storage público', 'Aprobación editorial'].map((item) => (
@@ -38,7 +48,12 @@ export function Hero({ stats, onExplore, onUpload }) {
           </motion.div>
         </motion.div>
 
-        <motion.div style={{ y, rotate }} className="relative">
+        <motion.div variants={slideRight} initial="hidden" animate="visible" style={{ y, rotate }} className="relative min-h-[560px]">
+          <motion.div style={{ y: yDeep }} className="absolute inset-x-8 top-2 h-[30rem] rounded-full bg-cyan/10 blur-3xl" />
+          <Suspense fallback={<div className="absolute inset-8 rounded-full bg-violet/10 blur-3xl" />}>
+            <HologramScene />
+          </Suspense>
+          <TiltCard className="relative z-10">
           <motion.div
             animate={{ y: [0, -14, 0] }}
             transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
@@ -64,6 +79,7 @@ export function Hero({ stats, onExplore, onUpload }) {
               </div>
             </div>
           </motion.div>
+          </TiltCard>
         </motion.div>
       </div>
     </section>

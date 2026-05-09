@@ -21,6 +21,24 @@ The frontend is now a React + Vite application with Tailwind CSS and Framer Moti
 
 Framer Motion powers route transitions, scroll reveals, hover interactions, parallax, floating cards, and animated counters. Tailwind handles the visual system and responsive behavior.
 
+## Animation System
+
+- `src/utils/motion.js`: shared variants for fade, slide, scale, stagger, spring, viewport, and page transitions.
+- `components/motion/MotionSection.jsx`: reusable scroll reveal and stagger orchestration.
+- `components/motion/SpotlightCard.jsx`: mouse-reactive hover lighting for cards.
+- `components/motion/TiltCard.jsx`: pointer-based 3D tilt for premium panels.
+- `components/motion/Magnetic.jsx`: magnetic CTA/button microinteraction.
+- `components/layout/AmbientBackground.jsx`: animated aurora background, cursor glow, and layered gradient motion.
+- `components/three/HologramScene.jsx`: lazy-loaded Three.js hologram in the hero.
+- `components/ui/AnimatedCounter.jsx`: count-up metrics for landing and dashboard stats.
+
+Performance notes:
+
+- Three.js is code-split into a separate Vite chunk.
+- Motion honors `prefers-reduced-motion` through CSS and interactive helpers.
+- Heavy visual effects are GPU-friendly transforms, opacity, blur, and gradients.
+- Skeleton loading uses a CSS shimmer instead of generic loading text.
+
 ## Commands
 
 - `npm run dev`: Vite development server on port 5173.

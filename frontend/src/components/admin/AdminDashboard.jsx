@@ -5,6 +5,8 @@ import { formatDate } from '../../utils/formatters'
 import { AnimatedCounter } from '../ui/AnimatedCounter'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
+import { SpotlightCard } from '../motion/SpotlightCard'
+import { MotionSection, Reveal } from '../motion/MotionSection'
 
 const sections = [
   ['estadisticas', 'Estadísticas'],
@@ -41,19 +43,21 @@ export function AdminDashboard({ admin, onBack }) {
 
   return (
     <main className="section-shell min-h-screen pt-32">
-      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <MotionSection as="div" className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan">Admin Console</p>
-          <h1 className="mt-2 text-4xl font-black text-white sm:text-5xl">Panel de administración</h1>
-          <p className="mt-3 text-slate-400">Modera recursos, edita descripciones y administra usuarios.</p>
+          <Reveal>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan">Admin Console</p>
+            <h1 className="mt-2 text-4xl font-black text-white sm:text-5xl">Panel de administración</h1>
+            <p className="mt-3 text-slate-400">Modera recursos, edita descripciones y administra usuarios.</p>
+          </Reveal>
         </div>
         <Button onClick={onBack}>Volver a biblioteca</Button>
-      </div>
+      </MotionSection>
 
       {toast && <div className="mb-5 rounded-2xl border border-white/10 bg-white/10 p-3 text-sm text-slate-200">{toast}</div>}
 
       <div className="grid gap-5 lg:grid-cols-[240px_1fr]">
-        <aside className="glass h-max rounded-[1.75rem] p-3">
+        <motion.aside initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} className="glass h-max rounded-[1.75rem] p-3 lg:sticky lg:top-28">
           {sections.map(([id, label]) => (
             <button
               key={id}
@@ -63,7 +67,7 @@ export function AdminDashboard({ admin, onBack }) {
               {label}
             </button>
           ))}
-        </aside>
+        </motion.aside>
 
         <motion.section key={section} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-[2rem] p-5">
           {section === 'estadisticas' && <StatsPanel stats={admin.adminStats} />}
@@ -221,9 +225,9 @@ function Small({ children }) {
 
 function Stat({ label, value }) {
   return (
-    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-5">
+    <SpotlightCard className="p-5">
       <span className="text-xs font-black uppercase tracking-wider text-slate-500">{label}</span>
       <AnimatedCounter value={value} className="mt-2 block text-4xl font-black text-white" />
-    </div>
+    </SpotlightCard>
   )
 }

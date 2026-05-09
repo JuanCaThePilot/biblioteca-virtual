@@ -2,15 +2,16 @@ import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
 import { fileBadgeClass, formatDate, formatSize } from '../../utils/formatters'
 import { Button } from '../ui/Button'
+import { SpotlightCard } from '../motion/SpotlightCard'
 
 export function ResourceCard({ resource, onDownload }) {
   return (
+    <SpotlightCard className="p-0">
     <motion.article
       layout
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -7, scale: 1.01 }}
-      className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.07] p-5 shadow-glass backdrop-blur-2xl"
+      className="group relative overflow-hidden p-5"
     >
       <div className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-br from-violet/15 via-transparent to-cyan/10" />
       <div className="relative">
@@ -37,5 +38,6 @@ export function ResourceCard({ resource, onDownload }) {
         </div>
       </div>
     </motion.article>
+    </SpotlightCard>
   )
 }

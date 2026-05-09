@@ -1,8 +1,10 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { ResourceSkeleton } from '../ui/Skeleton'
 import { AnimatedCounter } from '../ui/AnimatedCounter'
 import { ResourceCard } from './ResourceCard'
+import { MotionSection, Reveal } from '../motion/MotionSection'
+import { SpotlightCard } from '../motion/SpotlightCard'
 
 const categories = ['', 'Diagnóstico', 'Redes', 'Programación', 'Mantenimiento', 'Seguridad', 'Plantillas']
 
@@ -11,11 +13,11 @@ export function LibrarySection({ resourcesState }) {
 
   return (
     <section id="library" className="section-shell py-20">
-      <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-80px' }}>
-        <div className="mb-8">
+      <MotionSection as="div">
+        <Reveal className="mb-8">
           <h2 className="text-4xl font-black text-white sm:text-5xl">Dashboard de recursos</h2>
           <p className="mt-3 max-w-2xl text-slate-400">Busca, filtra y descarga contenido técnico aprobado por administradores.</p>
-        </div>
+        </Reveal>
 
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
           <Stat label="Recursos" value={stats.totalRecursos} />
@@ -53,22 +55,22 @@ export function LibrarySection({ resourcesState }) {
           {!loading && resources.length === 0 && (
             <div className="glass col-span-full rounded-[1.75rem] p-12 text-center text-slate-300">No se encontraron recursos.</div>
           )}
-          <AnimatePresence>
+          <AnimatePresence mode="popLayout">
             {!loading && resources.map((resource) => (
               <ResourceCard key={resource.id} resource={resource} onDownload={downloadResource} />
             ))}
           </AnimatePresence>
         </div>
-      </motion.div>
+      </MotionSection>
     </section>
   )
 }
 
 function Stat({ label, value }) {
   return (
-    <motion.div whileHover={{ y: -4 }} className="glass rounded-[1.75rem] p-5">
+    <SpotlightCard className="p-5">
       <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">{label}</span>
       <AnimatedCounter value={value || 0} className="mt-2 block text-4xl font-black text-white" />
-    </motion.div>
+    </SpotlightCard>
   )
 }
