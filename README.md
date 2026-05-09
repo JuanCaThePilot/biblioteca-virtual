@@ -105,6 +105,14 @@ SUPABASE_URL=https://TU_ID.supabase.co
 SUPABASE_ANON_KEY=eyJhbGci...
 SUPABASE_SERVICE_KEY=eyJhbGci...
 JWT_SECRET=cualquier_texto_largo_y_secreto_aqui_2024
+FRONTEND_URL=http://localhost:5173
+# SMTP requerido en producción para recuperar contraseña
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=usuario
+SMTP_PASS=clave
+SMTP_FROM="BibliotecaTech <no-reply@example.com>"
 PORT=3000
 ```
 
@@ -167,6 +175,8 @@ haciendo doble clic en el explorador de archivos.
 |--------|------|-------------|---------------|
 | POST | `/api/auth/register` | Crear cuenta | No |
 | POST | `/api/auth/login` | Iniciar sesión | No |
+| POST | `/api/auth/solicitar-reset` | Solicitar recuperación de contraseña | No |
+| POST | `/api/auth/confirmar-reset` | Confirmar nueva contraseña | No |
 | GET | `/api/auth/perfil` | Ver mi perfil | Sí |
 | GET | `/api/recursos` | Listar recursos | No |
 | GET | `/api/recursos/:id` | Ver recurso | No |
