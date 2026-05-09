@@ -1,0 +1,46 @@
+import { useState } from 'react'
+import { Modal } from '../ui/Modal'
+import { Button } from '../ui/Button'
+import { formatSize } from '../../utils/formatters'
+
+const categories = ['Diagnóstico', 'Redes', 'Programación', 'Mantenimiento', 'Seguridad', 'Plantillas', 'Otro']
+
+export function UploadModal({ open, onClose, resourcesState }) {
+  const [form, setForm] = useState({ nombre: '', descripcion: '', categoria: 'Diagnóstico', tags: '' })
+  const [file, setFile] = useState(null)
+
+  async function submit(event) {
+    event.preventDefault()
+    if (!file) {
+      resourcesState.setUploadError('Debes seleccionar un archivo.')
+      return
+    }
+    await resourcesState.uploadResource({ ...form, archivo: file })
+    setForm({ nombre: '', descripcion: '', categoria: 'Diagnóstico', tags: '' })
+    setFile(null)
+  }
+
+  return (
+    <Modal open={open} title="Subir nuevo recurso" onClose={onClose}>
+      {resourcesState.uploadError && <div className="mb-4 rounded-2xl border border-rose-300/20 bg-rose-500/15 p-3 text-sm text-rose-100">{resourcesState.uploadError}</div>}
+      {resourcesState.uploadSuccess && <div className="mb-4 rounded-2xl border border-emerald-300/20 bg-emerald-500/15 p-3 text-sm text-emerald-100">{resourcesState.uploadSuccess}</div>}
+      <form className="grid gap-4" onSubmit={submit}>
+        <input className="field" required value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre del recurso" />
+        <textarea className="field min-h-28" required value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Descripción" />
+        <select className="field" value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}>
+          {categories.map((category) => <option key={category}>{category}</option>)}
+        </select>
+        <input className="field" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Etiquetas separadas por coma" />
+        <label className="grid cursor-pointer place-items-center rounded-[1.5rem] border border-dashed border-white/20 bg-white/5 p-8 text-center transition hover:border-cyan/50 hover:bg-cyan/5">
+          <input className="sr-only" type="file" accept=".pdf,.docx,.doc,.py,.sql,.bat,.sh,.zip,.rar,.exe,.txt,.js,.ts" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+          <strong className="text-white">{file ? file.name : 'Seleccionar archivo'}</strong>
+          <span className="mt-2 text-sm text-slate-400">{file ? formatSize(file.size) : 'PDF, DOCX, PY, SQL, BAT, ZIP, RAR, EXE - max. 50 MB'}</span>
+        </label>
+        <div className="flex justify-end gap-2">
+          <Button type="button" onClick={onClose}>Cancelar</Button>
+          <Button className="btn-primary" disabled={resourcesState.uploading}>{resourcesState.uploading ? 'Subiendo...' : 'Publicar recurso'}</Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}

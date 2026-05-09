@@ -1,20 +1,30 @@
 # Frontend Architecture
 
-The frontend is a static vanilla HTML/CSS/JS application served from `frontend/public`.
+The frontend is now a React + Vite application with Tailwind CSS and Framer Motion.
 
 ## Structure
 
-- `public/index.html`: semantic markup, existing IDs, inline event hooks, and business logic for auth, resources, uploads, admin actions, and API calls.
-- `public/assets/styles.css`: premium SaaS visual system, responsive layout, glassmorphism, hero/dashboard styling, animations, and accessibility states.
-- `public/assets/ui.js`: non-business UI behavior such as sticky navbar state, scroll reveal, and animated counters.
+- `src/App.jsx`: SPA shell, page transitions, top-level composition, modal state.
+- `src/services/api.js`: API base URL resolution and fetch helpers.
+- `src/hooks/`: auth, resources, and admin business logic.
+- `src/components/`: reusable UI, layout, landing, auth, resources, and admin components.
+- `src/styles/index.css`: Tailwind layers, design tokens, and shared component classes.
 
 ## Integration Rules
 
-- Keep API calls routed through the existing `API` constant in `index.html`.
-- Preserve IDs used by JavaScript handlers, forms, modals, and admin tables.
+- Keep API calls routed through `src/services/api.js`.
+- Preserve backend endpoints and response contracts.
 - Keep backend routes unchanged unless the backend contract intentionally changes.
-- Add purely visual behavior in `assets/ui.js` instead of mixing it with data or auth logic.
+- Keep data mutations inside hooks instead of UI components.
 
 ## Motion
 
-This project does not currently use React or a frontend build pipeline, so React-only animation libraries such as Framer Motion are not installed here. Motion-style behavior is implemented with performant CSS animations, IntersectionObserver, and requestAnimationFrame while preserving the static deployment model.
+Framer Motion powers route transitions, scroll reveals, hover interactions, parallax, floating cards, and animated counters. Tailwind handles the visual system and responsive behavior.
+
+## Commands
+
+- `npm run dev`: Vite development server on port 5173.
+- `npm run build`: production build into `frontend/dist`.
+- `npm run preview`: preview built app.
+
+The Express backend serves `frontend/dist` when it exists, and falls back to `frontend/public` for compatibility.

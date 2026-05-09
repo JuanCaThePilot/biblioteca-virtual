@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "build:frontend": "cd ../frontend && npm install && npm run build",
     "smoke:supabase": "node scripts/smokeSupabase.js",
     "smoke:api": "node scripts/smokeApi.js",
     "smoke:render": "node scripts/smokeRender.js",

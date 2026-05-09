@@ -6,9 +6,16 @@ const path = require('path');
 const multer = require('multer');
 
 const app = express();
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+const frontendPublicPath = path.join(__dirname, '../frontend/public');
+const frontendPath = require('fs').existsSync(frontendDistPath) ? frontendDistPath : frontendPublicPath;
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
   'http://localhost:5500',
   'http://127.0.0.1:5500',
   'https://biblioteca-virtual-l4cu.onrender.com'
@@ -28,8 +35,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir el frontend estático desde la carpeta /frontend/public
-app.use(express.static(path.join(__dirname, '../frontend/public')));
+// Servir el frontend estático. En producción usa el build de Vite si existe.
+app.use(express.static(frontendPath));
 
 // ── RUTAS DE LA API ──────────────────────────────────────────────
 app.use('/api/auth',     require('./routes/auth'));
@@ -38,7 +45,7 @@ app.use('/api/admin',    require('./routes/admin'));
 
 // Ruta raíz → envía el index.html del frontend
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // ── MANEJO DE ERRORES ────────────────────────────────────────────
