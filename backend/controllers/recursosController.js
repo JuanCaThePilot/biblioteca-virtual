@@ -12,9 +12,10 @@ const upload = multer({
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain', 'text/x-python', 'application/zip',
-      'application/x-zip-compressed', 'application/octet-stream'
+      'application/x-zip-compressed', 'application/x-rar-compressed',
+      'application/vnd.rar', 'application/x-msdownload', 'application/octet-stream'
     ];
-    if (tiposPermitidos.includes(file.mimetype) || file.originalname.match(/\.(py|sql|bat|sh|js|ts|zip|pdf|docx|doc|txt)$/i)) {
+    if (tiposPermitidos.includes(file.mimetype) || file.originalname.match(/\.(py|sql|bat|sh|js|ts|zip|rar|exe|pdf|docx|doc|txt)$/i)) {
       cb(null, true);
     } else {
       cb(new Error('Tipo de archivo no permitido.'));

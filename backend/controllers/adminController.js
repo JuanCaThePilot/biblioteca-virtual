@@ -1,6 +1,17 @@
 // controllers/adminController.js
 const supabase = require('../config/supabase');
 
+const obtenerRutaStorage = (archivoUrl) => {
+  if (!archivoUrl || !archivoUrl.includes('/archivos/')) return null;
+  return archivoUrl.split('/archivos/')[1];
+};
+
+const eliminarArchivoStorage = async (archivoUrl) => {
+  const ruta = obtenerRutaStorage(archivoUrl);
+  if (!ruta) return;
+  await supabase.storage.from('archivos').remove([ruta]);
+};
+
 // ── VER RECURSOS PENDIENTES DE APROBACIÓN ────────────────────────
 const pendientes = async (req, res) => {
   const { data, error } = await supabase
@@ -25,6 +36,58 @@ const aprobar = async (req, res) => {
   res.json({ mensaje: 'Recurso aprobado y publicado en la biblioteca.' });
 };
 
+// ── LISTAR RECURSOS PUBLICADOS ───────────────────────────────────
+const listarRecursos = async (req, res) => {
+  const { data, error } = await supabase
+    .from('recursos')
+    .select('*, usuarios(nombre, email)')
+    .eq('aprobado', true)
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: 'Error al obtener recursos publicados.' });
+  res.json({ recursos: data });
+};
+
+// ── EDITAR DESCRIPCIÓN DE RECURSO PUBLICADO ─────────────────────
+const editarDescripcion = async (req, res) => {
+  const { id } = req.params;
+  const { descripcion } = req.body;
+
+  if (!descripcion || !descripcion.trim()) {
+    return res.status(400).json({ error: 'La descripción no puede estar vacía.' });
+  }
+
+  const { data, error } = await supabase
+    .from('recursos')
+    .update({ descripcion: descripcion.trim() })
+    .eq('id', id)
+    .select('id, nombre, descripcion')
+    .single();
+
+  if (error || !data) return res.status(500).json({ error: 'Error al actualizar descripción.' });
+  res.json({ mensaje: 'Descripción actualizada correctamente.', recurso: data });
+};
+
+// ── ELIMINAR RECURSO PUBLICADO ──────────────────────────────────
+const eliminarRecurso = async (req, res) => {
+  const { id } = req.params;
+
+  const { data: recurso, error: findError } = await supabase
+    .from('recursos')
+    .select('archivo_url')
+    .eq('id', id)
+    .single();
+
+  if (findError || !recurso) return res.status(404).json({ error: 'Recurso no encontrado.' });
+
+  await eliminarArchivoStorage(recurso.archivo_url);
+
+  const { error } = await supabase.from('recursos').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: 'Error al eliminar recurso.' });
+
+  res.json({ mensaje: 'Recurso eliminado correctamente.' });
+};
+
 // ── RECHAZAR RECURSO ─────────────────────────────────────────────
 const rechazar = async (req, res) => {
   const { id } = req.params;
@@ -33,10 +96,7 @@ const rechazar = async (req, res) => {
   const { data: recurso } = await supabase
     .from('recursos').select('archivo_url').eq('id', id).single();
 
-  if (recurso?.archivo_url) {
-    const ruta = recurso.archivo_url.split('/archivos/')[1];
-    await supabase.storage.from('archivos').remove([ruta]);
-  }
+  if (recurso?.archivo_url) await eliminarArchivoStorage(recurso.archivo_url);
 
   await supabase.from('recursos').delete().eq('id', id);
   res.json({ mensaje: 'Recurso rechazado y eliminado.' });
@@ -92,4 +152,14 @@ const estadisticas = async (req, res) => {
   });
 };
 
-module.exports = { pendientes, aprobar, rechazar, listarUsuarios, cambiarRol, estadisticas };
+module.exports = {
+  pendientes,
+  aprobar,
+  listarRecursos,
+  editarDescripcion,
+  eliminarRecurso,
+  rechazar,
+  listarUsuarios,
+  cambiarRol,
+  estadisticas
+};

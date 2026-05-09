@@ -91,6 +91,8 @@
     .badge-py   { background: #EAF3DE; color: #3B6D11; }
     .badge-docx { background: #E6F1FB; color: #185FA5; }
     .badge-zip  { background: #FAEEDA; color: #854F0B; }
+    .badge-rar  { background: #F2E8FE; color: #6B2DA3; }
+    .badge-exe  { background: #FCEBEB; color: #A32D2D; }
     .badge-sql  { background: #EEEDFE; color: #3C3489; }
     .badge-bat  { background: #F1EFE8; color: #5F5E5A; }
     .badge-default { background: var(--bg); color: var(--muted); }
@@ -275,6 +277,7 @@
       <div class="admin-sidebar">
         <button class="admin-menu-item active" onclick="showAdminSection('estadisticas', this)">Estadísticas</button>
         <button class="admin-menu-item" onclick="showAdminSection('pendientes', this)">Pendientes <span id="badge-count" style="background:#FAEEDA;color:#854F0B;padding:1px 7px;border-radius:99px;font-size:11px;margin-left:4px"></span></button>
+        <button class="admin-menu-item" onclick="showAdminSection('recursos', this)">Publicados</button>
         <button class="admin-menu-item" onclick="showAdminSection('usuarios', this)">Usuarios</button>
         <button class="admin-menu-item" onclick="showPage('home')" style="margin-top:auto;color:var(--accent)">← Volver a la biblioteca</button>
       </div>
@@ -304,6 +307,17 @@
             <table>
               <thead><tr><th>Nombre</th><th>Tipo</th><th>Categoría</th><th>Subido por</th><th>Acciones</th></tr></thead>
               <tbody id="pendientes-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RECURSOS PUBLICADOS -->
+        <div class="admin-section" id="admin-recursos">
+          <h2>Recursos publicados</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Nombre</th><th>Tipo</th><th>Categoría</th><th>Descargas</th><th>Subido por</th><th>Acciones</th></tr></thead>
+              <tbody id="recursos-admin-tbody"></tbody>
             </table>
           </div>
         </div>
@@ -357,13 +371,36 @@
     <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
       <div class="icon">📁</div>
       <strong>Haz clic para seleccionar el archivo</strong>
-      <p style="font-size:12px;margin-top:4px">PDF, DOCX, PY, SQL, BAT, ZIP — máx. 50 MB</p>
+      <p style="font-size:12px;margin-top:4px">PDF, DOCX, PY, SQL, BAT, ZIP, RAR, EXE — máx. 50 MB</p>
       <p class="file-selected" id="file-name-display" style="display:none"></p>
     </div>
-    <input type="file" id="file-input" style="display:none" accept=".pdf,.docx,.doc,.py,.sql,.bat,.sh,.zip,.txt,.js,.ts" onchange="onFileSelect(this)">
+    <input type="file" id="file-input" style="display:none" accept=".pdf,.docx,.doc,.py,.sql,.bat,.sh,.zip,.rar,.exe,.txt,.js,.ts" onchange="onFileSelect(this)">
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeUploadModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="doUpload()" id="btn-upload">Publicar recurso</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR DESCRIPCIÓN -->
+<div class="modal-overlay" id="modal-edit-desc">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Editar descripción</h2>
+      <button class="modal-close" onclick="closeEditDescriptionModal()">×</button>
+    </div>
+    <div class="alert alert-error" id="edit-desc-error"></div>
+    <div class="form-group">
+      <label>Recurso</label>
+      <input type="text" id="edit-desc-name" disabled>
+    </div>
+    <div class="form-group">
+      <label>Nueva descripción</label>
+      <textarea id="edit-desc-text"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeEditDescriptionModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDescription()" id="btn-save-desc">Guardar</button>
     </div>
   </div>
 </div>
@@ -600,6 +637,8 @@ async function doUpload() {
 }
 
 // ─── ADMIN ────────────────────────────────────────────────────────
+let editingResourceId = null;
+
 async function fetchStats() {
   if (!token || currentUser?.rol !== 'admin') return;
   try {
@@ -613,6 +652,36 @@ async function fetchStats() {
     const tbody = document.getElementById('top-tbody');
     tbody.innerHTML = (d.topRecursos || []).map(r => `<tr><td>${escapeHTML(r.nombre)}</td><td>${escapeHTML(r.categoria)}</td><td><strong>${r.descargas}</strong></td></tr>`).join('');
   } catch {}
+}
+
+async function fetchAdminRecursos() {
+  const res = await fetch(`${API}/admin/recursos`, { headers: { Authorization: `Bearer ${token}` } });
+  const d = await res.json();
+  const tbody = document.getElementById('recursos-admin-tbody');
+
+  if (!res.ok) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:2rem">${escapeHTML(d.error || 'Error al cargar recursos.')}</td></tr>`;
+    return;
+  }
+
+  if (!d.recursos?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">No hay recursos publicados.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = d.recursos.map(r => `
+    <tr>
+      <td><strong>${escapeHTML(r.nombre)}</strong><br><small style="color:var(--muted)">${escapeHTML((r.descripcion || '').substring(0,80))}${(r.descripcion || '').length > 80 ? '...' : ''}</small></td>
+      <td><span class="badge badge-pending">${escapeHTML(r.archivo_tipo)}</span></td>
+      <td>${escapeHTML(r.categoria)}</td>
+      <td><strong>${r.descargas || 0}</strong></td>
+      <td>${escapeHTML(r.usuarios?.nombre || '—')}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" data-id="${escapeAttribute(r.id)}" data-name="${escapeAttribute(r.nombre)}" data-description="${escapeAttribute(r.descripcion || '')}" onclick="openEditDescriptionModalFromButton(this)">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePublishedResource('${escapeAttribute(r.id)}')">Eliminar</button>
+      </td>
+    </tr>
+  `).join('');
 }
 
 async function fetchPendientes() {
@@ -659,7 +728,64 @@ async function adminAction(action, id) {
   const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
   const d = await res.json();
   toast(d.mensaje || 'Acción ejecutada');
-  fetchPendientes(); fetchStats(); fetchRecursos(); fetchPublicStats();
+  fetchPendientes(); fetchAdminRecursos(); fetchStats(); fetchRecursos(); fetchPublicStats();
+}
+
+function openEditDescriptionModalFromButton(btn) {
+  openEditDescriptionModal(btn.dataset.id, btn.dataset.name, btn.dataset.description);
+}
+
+function openEditDescriptionModal(id, nombre, descripcion) {
+  editingResourceId = id;
+  showAlert('edit-desc-error', '');
+  document.getElementById('edit-desc-name').value = nombre;
+  document.getElementById('edit-desc-text').value = descripcion;
+  document.getElementById('modal-edit-desc').classList.add('open');
+}
+
+function closeEditDescriptionModal() {
+  editingResourceId = null;
+  document.getElementById('modal-edit-desc').classList.remove('open');
+}
+
+async function saveDescription() {
+  const descripcion = document.getElementById('edit-desc-text').value.trim();
+  if (!editingResourceId) return;
+  if (!descripcion) return showAlert('edit-desc-error', 'La descripción no puede estar vacía.');
+
+  const btn = document.getElementById('btn-save-desc');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    const res = await fetch(`${API}/admin/recursos/${editingResourceId}/descripcion`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ descripcion })
+    });
+    const d = await res.json();
+    if (!res.ok) {
+      showAlert('edit-desc-error', d.error || 'No se pudo guardar.');
+      return;
+    }
+    toast(d.mensaje || 'Descripción actualizada');
+    closeEditDescriptionModal();
+    fetchAdminRecursos(); fetchRecursos();
+  } catch {
+    showAlert('edit-desc-error', 'Error de conexión.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+}
+
+async function deletePublishedResource(id) {
+  if (!confirm('¿Eliminar este recurso publicado? También se borrará el archivo.')) return;
+
+  const res = await fetch(`${API}/admin/recursos/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const d = await res.json();
+  toast(d.mensaje || d.error || 'Acción ejecutada');
+  fetchAdminRecursos(); fetchStats(); fetchRecursos(); fetchPublicStats();
 }
 
 async function toggleRol(id, rolActual) {
@@ -679,6 +805,7 @@ function showAdminSection(section, el) {
   document.getElementById(`admin-${section}`).classList.add('active');
   el.classList.add('active');
   if (section === 'pendientes') fetchPendientes();
+  if (section === 'recursos') fetchAdminRecursos();
   if (section === 'usuarios') fetchUsuarios();
   if (section === 'estadisticas') fetchStats();
 }
@@ -705,7 +832,7 @@ function toast(msg) {
 }
 
 function badgeClass(tipo) {
-  const map = { PDF:'badge-pdf', PY:'badge-py', DOCX:'badge-docx', ZIP:'badge-zip', SQL:'badge-sql', BAT:'badge-bat' };
+  const map = { PDF:'badge-pdf', PY:'badge-py', DOCX:'badge-docx', ZIP:'badge-zip', RAR:'badge-rar', EXE:'badge-exe', SQL:'badge-sql', BAT:'badge-bat' };
   return map[tipo?.toUpperCase()] || 'badge-default';
 }
 
@@ -734,6 +861,7 @@ function escapeHTML(value) {
 function escapeAttribute(value) {
   return escapeHTML(value).replace(/`/g, '&#96;');
 }
+
 </script>
 </body>
 </html>

@@ -1,7 +1,17 @@
 // routes/admin.js
 const express = require('express');
 const router = express.Router();
-const { pendientes, aprobar, rechazar, listarUsuarios, cambiarRol, estadisticas } = require('../controllers/adminController');
+const {
+  pendientes,
+  aprobar,
+  listarRecursos,
+  editarDescripcion,
+  eliminarRecurso,
+  rechazar,
+  listarUsuarios,
+  cambiarRol,
+  estadisticas
+} = require('../controllers/adminController');
 const { requireAdmin } = require('../middleware/auth');
 
 // Todas las rutas de admin requieren rol "admin"
@@ -13,8 +23,17 @@ router.get('/estadisticas', estadisticas);
 // GET    /api/admin/pendientes            → Recursos esperando aprobación
 router.get('/pendientes', pendientes);
 
+// GET    /api/admin/recursos              → Recursos publicados
+router.get('/recursos', listarRecursos);
+
 // PATCH  /api/admin/recursos/:id/aprobar  → Aprobar un recurso
 router.patch('/recursos/:id/aprobar', aprobar);
+
+// PATCH  /api/admin/recursos/:id/descripcion → Editar descripción
+router.patch('/recursos/:id/descripcion', editarDescripcion);
+
+// DELETE /api/admin/recursos/:id          → Eliminar recurso publicado
+router.delete('/recursos/:id', eliminarRecurso);
 
 // DELETE /api/admin/recursos/:id/rechazar → Rechazar y eliminar recurso
 router.delete('/recursos/:id/rechazar', rechazar);
