@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "graphrepo": {
+      "command": "node",
+      "args": [
+        "c:\\Users\\Administrator\\.vscode\\extensions\\the-muses-ltd.graphrepo-0.7.0\\dist\\mcp-server.cjs",
+        "serve"
+      ],
+      "env": {
+        "GRAPHREPO_DATA_FILE": "c:\\Users\\Administrator\\Downloads\\biblioteca-virtual\\.graphrepo\\graph.json",
+        "GRAPHREPO_REPO_PATH": "c:\\Users\\Administrator\\Downloads\\biblioteca-virtual"
+      }
+    }
+  }
+}

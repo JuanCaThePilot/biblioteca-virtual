@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca Virtual — Ingeniería de Sistemas</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f8f7f4; --surface: #ffffff; --border: #e2e0d8;
+      --text: #1a1917; --muted: #6b6963; --accent: #185FA5;
+      --accent-light: #E6F1FB; --accent-dark: #0C447C;
+      --success: #3B6D11; --success-bg: #EAF3DE;
+      --danger: #A32D2D; --danger-bg: #FCEBEB;
+      --warn-bg: #FAEEDA; --warn: #854F0B;
+      --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── NAV ── */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .nav-brand { font-weight: 600; font-size: 16px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+    .nav-brand span { font-size: 20px; }
+    .nav-actions { display: flex; gap: 8px; align-items: center; }
+    .nav-user { font-size: 13px; color: var(--muted); }
+
+    /* ── BUTTONS ── */
+    .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: all .15s; }
+    .btn:hover { background: var(--bg); }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); border-color: #F7C1C1; }
+    .btn-success { background: var(--success-bg); color: var(--success); border-color: #C0DD97; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* ── PAGES ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── AUTH PAGE ── */
+    .auth-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; width: 100%; max-width: 400px; }
+    .auth-title { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+    .auth-sub { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
+    .auth-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .auth-tab { flex: 1; padding: 8px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; background: transparent; color: var(--muted); }
+    .auth-tab.active { background: var(--accent); color: #fff; }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { font-size: 13px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 9px 12px; font-size: 14px;
+      border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); color: var(--text); transition: border .15s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .form-error { font-size: 12px; color: var(--danger); margin-top: 4px; display: none; }
+
+    /* ── MAIN LAYOUT ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+    .page-header { padding: 2rem 0 1rem; }
+    .page-header h1 { font-size: 24px; font-weight: 600; }
+    .page-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+    /* ── STATS GRID ── */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .stat-value { font-size: 26px; font-weight: 600; }
+
+    /* ── TOOLBAR ── */
+    .toolbar { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .search-input { flex: 1; min-width: 200px; padding: 9px 12px; font-size: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+    .search-input:focus { outline: none; border-color: var(--accent); }
+
+    /* ── CATEGORY PILLS ── */
+    .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .pill { padding: 5px 14px; font-size: 12px; font-weight: 500; border-radius: 99px; border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--muted); transition: all .15s; }
+    .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .pill.active { background: var(--accent-light); color: var(--accent-dark); border-color: var(--accent); }
+
+    /* ── RESOURCE GRID ── */
+    .resources-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 2rem; }
+    .resource-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; transition: border .15s, box-shadow .15s; }
+    .resource-card:hover { border-color: #B5D4F4; box-shadow: var(--shadow); }
+    .rc-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+    .file-badge { width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .badge-pdf  { background: #FCEBEB; color: #A32D2D; }
+    .badge-py   { background: #EAF3DE; color: #3B6D11; }
+    .badge-docx { background: #E6F1FB; color: #185FA5; }
+    .badge-zip  { background: #FAEEDA; color: #854F0B; }
+    .badge-sql  { background: #EEEDFE; color: #3C3489; }
+    .badge-bat  { background: #F1EFE8; color: #5F5E5A; }
+    .badge-default { background: var(--bg); color: var(--muted); }
+    .rc-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+    .rc-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .rc-desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .rc-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+    .rc-tag { padding: 2px 8px; font-size: 11px; border-radius: 99px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+    .rc-footer { display: flex; justify-content: space-between; align-items: center; }
+    .rc-downloads { font-size: 12px; color: var(--muted); }
+    .empty-state { text-align: center; padding: 4rem 1rem; color: var(--muted); }
+    .empty-state p { font-size: 15px; margin-top: 8px; }
+
+    /* ── MODAL ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border-radius: 14px; padding: 1.75rem; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h2 { font-size: 18px; font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); line-height: 1; }
+    .upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; color: var(--muted); font-size: 14px; margin-bottom: 1rem; transition: border .15s; }
+    .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .upload-zone .icon { font-size: 28px; margin-bottom: 8px; }
+    .file-selected { font-size: 12px; color: var(--success); font-weight: 500; }
+
+    /* ── ALERT ── */
+    .alert { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 1rem; display: none; }
+    .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid #F7C1C1; }
+    .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #C0DD97; }
+
+    /* ── ADMIN PANEL ── */
+    .admin-grid { display: grid; grid-template-columns: 220px 1fr; gap: 1.5rem; padding: 1.5rem 0; }
+    .admin-sidebar { display: flex; flex-direction: column; gap: 4px; }
+    .admin-menu-item { padding: 9px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; color: var(--muted); font-weight: 500; transition: all .15s; border: none; background: none; text-align: left; width: 100%; }
+    .admin-menu-item:hover { background: var(--bg); color: var(--text); }
+    .admin-menu-item.active { background: var(--accent-light); color: var(--accent-dark); }
+    .admin-content { min-height: 400px; }
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+    .admin-section h2 { font-size: 18px; font-weight: 600; margin-bottom: 1rem; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 600; border-radius: 99px; }
+    .badge-admin { background: var(--accent-light); color: var(--accent-dark); }
+    .badge-usuario { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+    .badge-pending { background: var(--warn-bg); color: var(--warn); }
+
+    /* ── TOAST ── */
+    #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1a1917; color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 13px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all .3s; pointer-events: none; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .admin-grid { grid-template-columns: 1fr; }
+      .resources-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVIGATION ── -->
+<nav>
+  <div class="nav-brand"><span>📚</span> BibliotecaTech</div>
+  <div class="nav-actions">
+    <span class="nav-user" id="nav-username"></span>
+    <button class="btn btn-sm" id="btn-admin" style="display:none" onclick="showPage('admin')">Panel Admin</button>
+    <button class="btn btn-sm btn-primary" id="btn-subir" style="display:none" onclick="openUploadModal()">+ Subir recurso</button>
+    <button class="btn btn-sm" id="btn-login" onclick="showPage('auth')">Iniciar sesión</button>
+    <button class="btn btn-sm btn-danger" id="btn-logout" style="display:none" onclick="logout()">Salir</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     PAGE: AUTH (Login / Registro)
+══════════════════════════════════════════ -->
+<div id="page-auth" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-title">BibliotecaTech</div>
+      <div class="auth-sub">Recursos para ingenieros y técnicos de sistemas</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Iniciar sesión</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Crear cuenta</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="auth-login">
+        <div class="alert alert-error" id="login-error"></div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="tu@email.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="login-password" placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
+        <p style="text-align:center;font-size:13px;color:var(--muted);margin-top:1rem">
+          ¿No tienes cuenta? <a href="#" onclick="switchAuthTab('register')" style="color:var(--accent)">Regístrate gratis</a>
+        </p>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="auth-register" style="display:none">
+        <div class="alert alert-error" id="register-error"></div>
+        <div class="form-group">
+          <label>Nombre completo</label>
+          <input type="text" id="reg-nombre" placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="tu@email.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres">
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="doRegister()">Crear cuenta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: BIBLIOTECA (Principal)
+══════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <div class="container">
+    <div class="page-header">
+      <h1>Biblioteca Virtual</h1>
+      <p>Recursos de diagnóstico, mantenimiento, redes y programación</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat-card"><div class="stat-label">Recursos</div><div class="stat-value" id="stat-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Categorías</div><div class="stat-value">6</div></div>
+      <div class="stat-card"><div class="stat-label">Descargas</div><div class="stat-value" id="stat-downloads">—</div></div>
+      <div class="stat-card"><div class="stat-label">Usuarios</div><div class="stat-value" id="stat-users">—</div></div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <input type="search" class="search-input" id="search" placeholder="Buscar recursos..." oninput="fetchRecursos()">
+      <select class="btn" id="orden" onchange="fetchRecursos()">
+        <option value="reciente">Más recientes</option>
+        <option value="popular">Más descargados</option>
+      </select>
+    </div>
+
+    <!-- CATEGORY FILTER -->
+    <div class="pills" id="pills">
+      <button class="pill active" onclick="setCategoria('', this)">Todos</button>
+      <button class="pill" onclick="setCategoria('Diagnóstico', this)">Diagnóstico</button>
+      <button class="pill" onclick="setCategoria('Redes', this)">Redes</button>
+      <button class="pill" onclick="setCategoria('Programación', this)">Programación</button>
+      <button class="pill" onclick="setCategoria('Mantenimiento', this)">Mantenimiento</button>
+      <button class="pill" onclick="setCategoria('Seguridad', this)">Seguridad</button>
+      <button class="pill" onclick="setCategoria('Plantillas', this)">Plantillas</button>
+    </div>
+
+    <!-- RESOURCES -->
+    <div class="resources-grid" id="resources-grid">
+      <div class="empty-state"><p>Cargando recursos...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: ADMIN PANEL
+══════════════════════════════════════════ -->
+<div id="page-admin" class="page">
+  <div class="container">
+    <div class="page-header">
+      <h1>Panel de Administración</h1>
+      <p>Modera recursos y gestiona usuarios</p>
+    </div>
+    <div class="admin-grid">
+      <div class="admin-sidebar">
+        <button class="admin-menu-item active" onclick="showAdminSection('estadisticas', this)">Estadísticas</button>
+        <button class="admin-menu-item" onclick="showAdminSection('pendientes', this)">Pendientes <span id="badge-count" style="background:#FAEEDA;color:#854F0B;padding:1px 7px;border-radius:99px;font-size:11px;margin-left:4px"></span></button>
+        <button class="admin-menu-item" onclick="showAdminSection('usuarios', this)">Usuarios</button>
+        <button class="admin-menu-item" onclick="showPage('home')" style="margin-top:auto;color:var(--accent)">← Volver a la biblioteca</button>
+      </div>
+      <div class="admin-content">
+
+        <!-- ESTADÍSTICAS -->
+        <div class="admin-section active" id="admin-estadisticas">
+          <h2>Resumen general</h2>
+          <div class="stats" id="admin-stats-grid">
+            <div class="stat-card"><div class="stat-label">Recursos publicados</div><div class="stat-value" id="a-total">—</div></div>
+            <div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-value" id="a-pending">—</div></div>
+            <div class="stat-card"><div class="stat-label">Usuarios</div><div class="stat-value" id="a-users">—</div></div>
+          </div>
+          <h2 style="margin-top:1.5rem">Top recursos descargados</h2>
+          <div class="table-wrap">
+            <table id="top-table">
+              <thead><tr><th>Recurso</th><th>Categoría</th><th>Descargas</th></tr></thead>
+              <tbody id="top-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PENDIENTES -->
+        <div class="admin-section" id="admin-pendientes">
+          <h2>Recursos pendientes de aprobación</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Nombre</th><th>Tipo</th><th>Categoría</th><th>Subido por</th><th>Acciones</th></tr></thead>
+              <tbody id="pendientes-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- USUARIOS -->
+        <div class="admin-section" id="admin-usuarios">
+          <h2>Gestión de usuarios</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Registro</th><th>Acciones</th></tr></thead>
+              <tbody id="usuarios-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: SUBIR RECURSO
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-upload">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Subir nuevo recurso</h2>
+      <button class="modal-close" onclick="closeUploadModal()">×</button>
+    </div>
+    <div class="alert alert-error" id="upload-error"></div>
+    <div class="alert alert-success" id="upload-success"></div>
+    <div class="form-group">
+      <label>Nombre del recurso *</label>
+      <input type="text" id="up-nombre" placeholder="Ej: Script diagnóstico de RAM">
+    </div>
+    <div class="form-group">
+      <label>Descripción *</label>
+      <textarea id="up-desc" placeholder="¿Qué hace este recurso? ¿Para qué sirve?"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Categoría *</label>
+      <select id="up-cat">
+        <option>Diagnóstico</option><option>Redes</option><option>Programación</option>
+        <option>Mantenimiento</option><option>Seguridad</option><option>Plantillas</option><option>Otro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Etiquetas (separadas por coma)</label>
+      <input type="text" id="up-tags" placeholder="Ej: Windows, hardware, diagnóstico">
+    </div>
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📁</div>
+      <strong>Haz clic para seleccionar el archivo</strong>
+      <p style="font-size:12px;margin-top:4px">PDF, DOCX, PY, SQL, BAT, ZIP — máx. 50 MB</p>
+      <p class="file-selected" id="file-name-display" style="display:none"></p>
+    </div>
+    <input type="file" id="file-input" style="display:none" accept=".pdf,.docx,.doc,.py,.sql,.bat,.sh,.zip,.txt,.js,.ts" onchange="onFileSelect(this)">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeUploadModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="doUpload()" id="btn-upload">Publicar recurso</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─── CONFIGURACIÓN ────────────────────────────────────────────────
+const API = window.location.port === '3000' ? '/api' : 'http://localhost:3000/api';
+let token = localStorage.getItem('bv_token');
+let currentUser = JSON.parse(localStorage.getItem('bv_user') || 'null');
+let activeCategory = '';
+
+// ─── INIT ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  updateNav();
+  fetchRecursos();
+  fetchPublicStats();
+  if (currentUser?.rol === 'admin') fetchStats();
+});
+
+function updateNav() {
+  const loggedIn = !!token;
+  document.getElementById('btn-login').style.display = loggedIn ? 'none' : '';
+  document.getElementById('btn-logout').style.display = loggedIn ? '' : 'none';
+  document.getElementById('btn-subir').style.display = loggedIn ? '' : 'none';
+  document.getElementById('btn-admin').style.display = (loggedIn && currentUser?.rol === 'admin') ? '' : 'none';
+  document.getElementById('nav-username').textContent = loggedIn ? `Hola, ${currentUser?.nombre?.split(' ')[0]}` : '';
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.getElementById('auth-login').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('auth-register').style.display = tab === 'register' ? '' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  showAlert('login-error', '');
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) return showAlert('login-error', data.error);
+    saveSession(data.token, data.usuario);
+    showPage('home');
+    toast('¡Bienvenido! 👋');
+    fetchRecursos();
+    fetchPublicStats();
+    if (currentUser?.rol === 'admin') fetchStats();
+  } catch { showAlert('login-error', 'Error de conexión. ¿Está el servidor encendido?'); }
+}
+
+async function doRegister() {
+  const nombre = document.getElementById('reg-nombre').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  showAlert('register-error', '');
+  try {
+    const res = await fetch(`${API}/auth/register`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) return showAlert('register-error', data.error);
+    saveSession(data.token, data.usuario);
+    showPage('home');
+    toast('¡Cuenta creada! Bienvenido 🎉');
+    fetchRecursos();
+    fetchPublicStats();
+  } catch { showAlert('register-error', 'Error de conexión.'); }
+}
+
+function saveSession(t, user) {
+  token = t; currentUser = user;
+  localStorage.setItem('bv_token', t);
+  localStorage.setItem('bv_user', JSON.stringify(user));
+  updateNav();
+}
+
+function logout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('bv_token');
+  localStorage.removeItem('bv_user');
+  updateNav();
+  showPage('home');
+  toast('Sesión cerrada');
+}
+
+// ─── RECURSOS ─────────────────────────────────────────────────────
+async function fetchRecursos() {
+  const buscar = document.getElementById('search').value;
+  const orden = document.getElementById('orden').value;
+  let url = `${API}/recursos?orden=${orden}`;
+  if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
+  if (activeCategory) url += `&categoria=${encodeURIComponent(activeCategory)}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    renderRecursos(data.recursos || []);
+    if (data.total !== undefined) document.getElementById('stat-total').textContent = data.total;
+  } catch {
+    document.getElementById('resources-grid').innerHTML = '<div class="empty-state"><p>Error al conectar con el servidor.<br><small>Asegúrate de que el backend esté corriendo en localhost:3000</small></p></div>';
+  }
+}
+
+async function fetchPublicStats() {
+  try {
+    const res = await fetch(`${API}/recursos/estadisticas`);
+    const data = await res.json();
+    if (!res.ok) return;
+    document.getElementById('stat-total').textContent = data.totalRecursos ?? 0;
+    document.getElementById('stat-downloads').textContent = data.totalDescargas ?? 0;
+    document.getElementById('stat-users').textContent = data.totalUsuarios ?? 0;
+  } catch {}
+}
+
+function renderRecursos(list) {
+  const grid = document.getElementById('resources-grid');
+  if (!list.length) { grid.innerHTML = '<div class="empty-state"><p>No se encontraron recursos.</p></div>'; return; }
+  grid.innerHTML = list.map(r => `
+    <div class="resource-card">
+      <div class="rc-header">
+        <div class="file-badge ${badgeClass(r.archivo_tipo)}">${escapeHTML(r.archivo_tipo || '')}</div>
+        <div>
+          <div class="rc-name">${escapeHTML(r.nombre)}</div>
+          <div class="rc-meta">${escapeHTML(r.usuarios?.nombre || 'Anónimo')} · ${formatDate(r.created_at)}</div>
+        </div>
+      </div>
+      <div class="rc-desc">${escapeHTML(r.descripcion || '')}</div>
+      <div class="rc-tags">${(r.tags || []).map(t => `<span class="rc-tag">${escapeHTML(t)}</span>`).join('')}</div>
+      <div class="rc-footer">
+        <span class="rc-downloads">↓ ${r.descargas} descargas · ${formatSize(r.archivo_tamaño)}</span>
+        <button class="btn btn-sm btn-primary" onclick="doDownload('${escapeAttribute(r.id)}', this)">Descargar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function doDownload(id, btn) {
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch(`${API}/recursos/${id}/descargar`);
+    const data = await res.json();
+    if (data.url) window.open(data.url, '_blank');
+    toast('Descarga iniciada ✓');
+    fetchRecursos();
+  } catch { toast('Error al descargar'); }
+  btn.disabled = false; btn.textContent = 'Descargar';
+}
+
+function setCategoria(cat, el) {
+  activeCategory = cat;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  fetchRecursos();
+}
+
+// ─── SUBIR RECURSO ─────────────────────────────────────────────────
+let selectedFile = null;
+function openUploadModal() {
+  if (!token) { showPage('auth'); return; }
+  document.getElementById('modal-upload').classList.add('open');
+}
+function closeUploadModal() { document.getElementById('modal-upload').classList.remove('open'); }
+
+function onFileSelect(input) {
+  selectedFile = input.files[0];
+  if (selectedFile) {
+    document.getElementById('file-name-display').textContent = `✓ ${selectedFile.name} (${formatSize(selectedFile.size)})`;
+    document.getElementById('file-name-display').style.display = '';
+  }
+}
+
+async function doUpload() {
+  const nombre = document.getElementById('up-nombre').value.trim();
+  const desc = document.getElementById('up-desc').value.trim();
+  const cat = document.getElementById('up-cat').value;
+  const tags = document.getElementById('up-tags').value;
+  showAlert('upload-error', ''); showAlert('upload-success', '');
+  if (!nombre || !desc || !selectedFile) return showAlert('upload-error', 'Nombre, descripción y archivo son obligatorios.');
+  const btn = document.getElementById('btn-upload');
+  btn.disabled = true; btn.textContent = 'Subiendo...';
+  const fd = new FormData();
+  fd.append('nombre', nombre); fd.append('descripcion', desc);
+  fd.append('categoria', cat); fd.append('tags', tags);
+  fd.append('archivo', selectedFile);
+  try {
+    const res = await fetch(`${API}/recursos`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+    const data = await res.json();
+    if (!res.ok) return showAlert('upload-error', data.error);
+    showAlert('upload-success', '¡Recurso enviado! Será revisado por un administrador antes de publicarse.');
+    document.getElementById('up-nombre').value = '';
+    document.getElementById('up-desc').value = '';
+    document.getElementById('up-tags').value = '';
+    document.getElementById('file-name-display').style.display = 'none';
+    document.getElementById('file-input').value = '';
+    selectedFile = null;
+    fetchPublicStats();
+  } catch { showAlert('upload-error', 'Error al subir. Verifica la conexión.'); }
+  btn.disabled = false; btn.textContent = 'Publicar recurso';
+}
+
+// ─── ADMIN ────────────────────────────────────────────────────────
+async function fetchStats() {
+  if (!token || currentUser?.rol !== 'admin') return;
+  try {
+    const res = await fetch(`${API}/admin/estadisticas`, { headers: { Authorization: `Bearer ${token}` } });
+    const d = await res.json();
+    document.getElementById('a-total').textContent = d.totalRecursos || 0;
+    document.getElementById('a-pending').textContent = d.pendientesCount || 0;
+    document.getElementById('a-users').textContent = d.totalUsuarios || 0;
+    document.getElementById('stat-users').textContent = d.totalUsuarios || 0;
+    if (d.pendientesCount > 0) document.getElementById('badge-count').textContent = d.pendientesCount;
+    const tbody = document.getElementById('top-tbody');
+    tbody.innerHTML = (d.topRecursos || []).map(r => `<tr><td>${escapeHTML(r.nombre)}</td><td>${escapeHTML(r.categoria)}</td><td><strong>${r.descargas}</strong></td></tr>`).join('');
+  } catch {}
+}
+
+async function fetchPendientes() {
+  const res = await fetch(`${API}/admin/pendientes`, { headers: { Authorization: `Bearer ${token}` } });
+  const d = await res.json();
+  const tbody = document.getElementById('pendientes-tbody');
+  if (!d.pendientes?.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Sin recursos pendientes ✓</td></tr>'; return; }
+  tbody.innerHTML = d.pendientes.map(r => `
+    <tr>
+      <td><strong>${escapeHTML(r.nombre)}</strong><br><small style="color:var(--muted)">${escapeHTML((r.descripcion || '').substring(0,60))}...</small></td>
+      <td><span class="badge badge-pending">${escapeHTML(r.archivo_tipo)}</span></td>
+      <td>${escapeHTML(r.categoria)}</td>
+      <td>${escapeHTML(r.usuarios?.nombre || '—')}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-success" onclick="adminAction('aprobar','${escapeAttribute(r.id)}')">Aprobar</button>
+        <button class="btn btn-sm btn-danger" onclick="adminAction('rechazar','${escapeAttribute(r.id)}')">Rechazar</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function fetchUsuarios() {
+  const res = await fetch(`${API}/admin/usuarios`, { headers: { Authorization: `Bearer ${token}` } });
+  const d = await res.json();
+  const tbody = document.getElementById('usuarios-tbody');
+  tbody.innerHTML = (d.usuarios || []).map(u => `
+    <tr>
+      <td><strong>${escapeHTML(u.nombre)}</strong></td>
+      <td style="color:var(--muted)">${escapeHTML(u.email)}</td>
+      <td><span class="badge badge-${escapeAttribute(u.rol)}">${escapeHTML(u.rol)}</span></td>
+      <td style="color:var(--muted)">${formatDate(u.created_at)}</td>
+      <td>
+        <button class="btn btn-sm" onclick="toggleRol('${escapeAttribute(u.id)}','${escapeAttribute(u.rol)}')">
+          ${u.rol === 'admin' ? 'Quitar admin' : 'Hacer admin'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function adminAction(action, id) {
+  const url = action === 'aprobar' ? `${API}/admin/recursos/${id}/aprobar` : `${API}/admin/recursos/${id}/rechazar`;
+  const method = action === 'aprobar' ? 'PATCH' : 'DELETE';
+  const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
+  const d = await res.json();
+  toast(d.mensaje || 'Acción ejecutada');
+  fetchPendientes(); fetchStats(); fetchRecursos(); fetchPublicStats();
+}
+
+async function toggleRol(id, rolActual) {
+  const nuevoRol = rolActual === 'admin' ? 'usuario' : 'admin';
+  if (!confirm(`¿Cambiar el rol a "${nuevoRol}"?`)) return;
+  const res = await fetch(`${API}/admin/usuarios/${id}/rol`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ rol: nuevoRol })
+  });
+  const d = await res.json();
+  toast(d.mensaje); fetchUsuarios();
+}
+
+function showAdminSection(section, el) {
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.admin-menu-item').forEach(m => m.classList.remove('active'));
+  document.getElementById(`admin-${section}`).classList.add('active');
+  el.classList.add('active');
+  if (section === 'pendientes') fetchPendientes();
+  if (section === 'usuarios') fetchUsuarios();
+  if (section === 'estadisticas') fetchStats();
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  if (name === 'home') fetchRecursos();
+  if (name === 'admin') { fetchStats(); }
+}
+
+function showAlert(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? '' : 'none';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function badgeClass(tipo) {
+  const map = { PDF:'badge-pdf', PY:'badge-py', DOCX:'badge-docx', ZIP:'badge-zip', SQL:'badge-sql', BAT:'badge-bat' };
+  return map[tipo?.toUpperCase()] || 'badge-default';
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024*1024) return `${Math.round(bytes/1024)} KB`;
+  return `${(bytes/1024/1024).toFixed(1)} MB`;
+}
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replace(/`/g, '&#96;');
+}
+</script>
+</body>
+</html>
