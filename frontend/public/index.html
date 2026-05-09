@@ -96,7 +96,7 @@
     .badge-default { background: var(--bg); color: var(--muted); }
     .rc-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
     .rc-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
-    .rc-desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .rc-desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .rc-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
     .rc-tag { padding: 2px 8px; font-size: 11px; border-radius: 99px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
     .rc-footer { display: flex; justify-content: space-between; align-items: center; }
@@ -374,10 +374,10 @@
 <script>
 // ─── CONFIGURACIÓN ────────────────────────────────────────────────
 const RENDER_API = 'https://biblioteca-virtual-l4cu.onrender.com/api';
-const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3000/api'
+const API = window.location.port === '3000'
+  ? '/api'
   : window.location.protocol.startsWith('http')
-    ? `${window.location.origin}/api`
+    ? RENDER_API
     : RENDER_API;
 let token = localStorage.getItem('bv_token');
 let currentUser = JSON.parse(localStorage.getItem('bv_user') || 'null');
@@ -426,7 +426,7 @@ async function doLogin() {
     fetchRecursos();
     fetchPublicStats();
     if (currentUser?.rol === 'admin') fetchStats();
-  } catch { showAlert('login-error', 'Error de conexión. ¿Está el servidor encendido?'); }
+  } catch { showAlert('login-error', `Error de conexión con ${API}`); }
 }
 
 async function doRegister() {
@@ -446,7 +446,7 @@ async function doRegister() {
     toast('¡Cuenta creada! Bienvenido 🎉');
     fetchRecursos();
     fetchPublicStats();
-  } catch { showAlert('register-error', 'Error de conexión.'); }
+  } catch { showAlert('register-error', `Error de conexión con ${API}`); }
 }
 
 function saveSession(t, user) {
