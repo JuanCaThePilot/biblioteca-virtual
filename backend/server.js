@@ -6,10 +6,23 @@ const path = require('path');
 const multer = require('multer');
 
 const app = express();
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+  'https://biblioteca-virtual-l4cu.onrender.com'
+];
 
 // ── MIDDLEWARES GLOBALES ─────────────────────────────────────────
 app.use(cors({
-  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000'],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Origen no permitido por CORS.'));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -49,6 +62,6 @@ app.use((err, req, res, next) => {
 // ── INICIAR SERVIDOR ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`\n✅ Servidor corriendo en puerto ${PORT}`);
   console.log(`📚 Biblioteca Virtual — Backend listo\n`);
 });
