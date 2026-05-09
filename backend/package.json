@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "smoke:supabase": "node scripts/smokeSupabase.js",
     "smoke:api": "node scripts/smokeApi.js",
-    "smoke:render": "node scripts/smokeRender.js"
+    "smoke:render": "node scripts/smokeRender.js",
+    "smoke:admin-role": "node scripts/smokeAdminRole.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

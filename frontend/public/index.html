@@ -384,7 +384,8 @@ let currentUser = JSON.parse(localStorage.getItem('bv_user') || 'null');
 let activeCategory = '';
 
 // ─── INIT ─────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  await refreshProfile();
   updateNav();
   fetchRecursos();
   fetchPublicStats();
@@ -398,6 +399,25 @@ function updateNav() {
   document.getElementById('btn-subir').style.display = loggedIn ? '' : 'none';
   document.getElementById('btn-admin').style.display = (loggedIn && currentUser?.rol === 'admin') ? '' : 'none';
   document.getElementById('nav-username').textContent = loggedIn ? `Hola, ${currentUser?.nombre?.split(' ')[0]}` : '';
+}
+
+async function refreshProfile() {
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${API}/auth/perfil`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.usuario) {
+      logout(false);
+      return;
+    }
+
+    currentUser = data.usuario;
+    localStorage.setItem('bv_user', JSON.stringify(currentUser));
+  } catch {}
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────
@@ -456,13 +476,13 @@ function saveSession(t, user) {
   updateNav();
 }
 
-function logout() {
+function logout(showMessage = true) {
   token = null; currentUser = null;
   localStorage.removeItem('bv_token');
   localStorage.removeItem('bv_user');
   updateNav();
   showPage('home');
-  toast('Sesión cerrada');
+  if (showMessage) toast('Sesión cerrada');
 }
 
 // ─── RECURSOS ─────────────────────────────────────────────────────

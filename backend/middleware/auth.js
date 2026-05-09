@@ -2,6 +2,7 @@
 // Protege rutas: verifica que el usuario tenga un token válido
 
 const jwt = require('jsonwebtoken');
+const supabase = require('../config/supabase');
 
 // Middleware para rutas que requieren login
 const requireAuth = (req, res, next) => {
@@ -23,11 +24,23 @@ const requireAuth = (req, res, next) => {
 
 // Middleware solo para administradores
 const requireAdmin = (req, res, next) => {
-  requireAuth(req, res, () => {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Solo los administradores pueden hacer esto.' });
+  requireAuth(req, res, async () => {
+    try {
+      const { data: usuario, error } = await supabase
+        .from('usuarios')
+        .select('rol')
+        .eq('id', req.user.id)
+        .single();
+
+      if (error || usuario?.rol !== 'admin') {
+        return res.status(403).json({ error: 'Solo los administradores pueden hacer esto.' });
+      }
+
+      req.user.role = usuario.rol;
+      next();
+    } catch (err) {
+      return res.status(500).json({ error: 'Error al verificar permisos de administrador.' });
     }
-    next();
   });
 };
 
