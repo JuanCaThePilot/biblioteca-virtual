@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Biblioteca Virtual — Ingeniería de Sistemas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -153,8 +156,15 @@
       .resources-grid { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
+<div class="ambient-bg" aria-hidden="true">
+  <div class="mesh mesh-a"></div>
+  <div class="mesh mesh-b"></div>
+  <div class="mesh mesh-c"></div>
+  <div class="noise-layer"></div>
+</div>
 
 <!-- ── NAVIGATION ── -->
 <nav>
@@ -223,14 +233,57 @@
      PAGE: BIBLIOTECA (Principal)
 ══════════════════════════════════════════ -->
 <div id="page-home" class="page active">
+  <section class="hero-shell reveal">
+    <div class="hero-content">
+      <div class="hero-copy">
+        <div class="eyebrow">
+          <span class="pulse-dot"></span>
+          Plataforma académica conectada a Supabase
+        </div>
+        <h1>Biblioteca Virtual para recursos técnicos de alto impacto.</h1>
+        <p>
+          Centraliza scripts, manuales, plantillas, instaladores y documentación para ingeniería de sistemas con revisión administrativa y descargas seguras.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-primary hero-cta" onclick="document.getElementById('search').focus();document.getElementById('library-section').scrollIntoView({behavior:'smooth'});">Explorar recursos</button>
+          <button class="btn hero-secondary" onclick="openUploadModal()">Subir recurso</button>
+        </div>
+        <div class="hero-trust">
+          <span>Moderación admin</span>
+          <span>Storage integrado</span>
+          <span>JWT Auth</span>
+        </div>
+      </div>
+
+      <div class="hero-preview" aria-label="Vista previa del panel">
+        <div class="preview-window glass-panel floating-card">
+          <div class="window-bar">
+            <span></span><span></span><span></span>
+            <strong>BibliotecaTech</strong>
+          </div>
+          <div class="preview-stats">
+            <div><small>Recursos</small><strong id="hero-total">0</strong></div>
+            <div><small>Descargas</small><strong id="hero-downloads">0</strong></div>
+            <div><small>Usuarios</small><strong id="hero-users">0</strong></div>
+          </div>
+          <div class="preview-list">
+            <div class="preview-item"><span class="preview-icon">PDF</span><div><strong>Guías técnicas</strong><small>Material curado por administradores</small></div></div>
+            <div class="preview-item"><span class="preview-icon accent">EXE</span><div><strong>Herramientas</strong><small>Recursos aprobados para descarga</small></div></div>
+            <div class="preview-item"><span class="preview-icon green">ZIP</span><div><strong>Scripts y paquetes</strong><small>Etiquetas, categorías y búsqueda</small></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="container">
-    <div class="page-header">
+    <div class="page-header reveal" id="library-section">
       <h1>Biblioteca Virtual</h1>
       <p>Recursos de diagnóstico, mantenimiento, redes y programación</p>
     </div>
 
     <!-- STATS -->
-    <div class="stats">
+    <div class="stats reveal">
       <div class="stat-card"><div class="stat-label">Recursos</div><div class="stat-value" id="stat-total">—</div></div>
       <div class="stat-card"><div class="stat-label">Categorías</div><div class="stat-value">6</div></div>
       <div class="stat-card"><div class="stat-label">Descargas</div><div class="stat-value" id="stat-downloads">—</div></div>
@@ -238,7 +291,7 @@
     </div>
 
     <!-- TOOLBAR -->
-    <div class="toolbar">
+    <div class="toolbar reveal">
       <input type="search" class="search-input" id="search" placeholder="Buscar recursos..." oninput="fetchRecursos()">
       <select class="btn" id="orden" onchange="fetchRecursos()">
         <option value="reciente">Más recientes</option>
@@ -247,7 +300,7 @@
     </div>
 
     <!-- CATEGORY FILTER -->
-    <div class="pills" id="pills">
+    <div class="pills reveal" id="pills">
       <button class="pill active" onclick="setCategoria('', this)">Todos</button>
       <button class="pill" onclick="setCategoria('Diagnóstico', this)">Diagnóstico</button>
       <button class="pill" onclick="setCategoria('Redes', this)">Redes</button>
@@ -258,7 +311,7 @@
     </div>
 
     <!-- RESOURCES -->
-    <div class="resources-grid" id="resources-grid">
+    <div class="resources-grid reveal" id="resources-grid">
       <div class="empty-state"><p>Cargando recursos...</p></div>
     </div>
   </div>
@@ -269,11 +322,11 @@
 ══════════════════════════════════════════ -->
 <div id="page-admin" class="page">
   <div class="container">
-    <div class="page-header">
+    <div class="page-header reveal">
       <h1>Panel de Administración</h1>
       <p>Modera recursos y gestiona usuarios</p>
     </div>
-    <div class="admin-grid">
+    <div class="admin-grid reveal">
       <div class="admin-sidebar">
         <button class="admin-menu-item active" onclick="showAdminSection('estadisticas', this)">Estadísticas</button>
         <button class="admin-menu-item" onclick="showAdminSection('pendientes', this)">Pendientes <span id="badge-count" style="background:#FAEEDA;color:#854F0B;padding:1px 7px;border-radius:99px;font-size:11px;margin-left:4px"></span></button>
@@ -547,6 +600,9 @@ async function fetchPublicStats() {
     document.getElementById('stat-total').textContent = data.totalRecursos ?? 0;
     document.getElementById('stat-downloads').textContent = data.totalDescargas ?? 0;
     document.getElementById('stat-users').textContent = data.totalUsuarios ?? 0;
+    document.getElementById('hero-total').textContent = data.totalRecursos ?? 0;
+    document.getElementById('hero-downloads').textContent = data.totalDescargas ?? 0;
+    document.getElementById('hero-users').textContent = data.totalUsuarios ?? 0;
   } catch {}
 }
 
@@ -863,5 +919,6 @@ function escapeAttribute(value) {
 }
 
 </script>
+<script src="assets/ui.js"></script>
 </body>
 </html>
