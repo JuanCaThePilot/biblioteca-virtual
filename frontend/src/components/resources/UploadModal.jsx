@@ -1,13 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { formatSize } from '../../utils/formatters'
 
 const categories = ['Diagnóstico', 'Redes', 'Programación', 'Mantenimiento', 'Seguridad', 'Plantillas', 'Otro']
+const emptyUploadForm = { nombre: '', descripcion: '', categoria: 'Diagnóstico', tags: '' }
 
-export function UploadModal({ open, onClose, resourcesState }) {
-  const [form, setForm] = useState({ nombre: '', descripcion: '', categoria: 'Diagnóstico', tags: '' })
+export function UploadModal({ open, onClose, resourcesState, resetKey = 0 }) {
+  const [form, setForm] = useState(emptyUploadForm)
   const [file, setFile] = useState(null)
+
+  useEffect(() => {
+    setForm(emptyUploadForm)
+    setFile(null)
+    resourcesState.setUploadError('')
+    resourcesState.setUploadSuccess('')
+  }, [resetKey])
 
   async function submit(event) {
     event.preventDefault()
@@ -16,7 +24,7 @@ export function UploadModal({ open, onClose, resourcesState }) {
       return
     }
     await resourcesState.uploadResource({ ...form, archivo: file })
-    setForm({ nombre: '', descripcion: '', categoria: 'Diagnóstico', tags: '' })
+    setForm(emptyUploadForm)
     setFile(null)
   }
 

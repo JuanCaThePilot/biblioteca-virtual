@@ -16,7 +16,8 @@ import { pageTransition } from './utils/motion'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
 export default function App() {
-  const [page, setPage] = useState('home')
+  const [resetTokenFromUrl, setResetTokenFromUrl] = useState(() => new URLSearchParams(window.location.search).get('reset_token') || '')
+  const [page, setPage] = useState(() => resetTokenFromUrl ? 'auth' : 'home')
   const [uploadOpen, setUploadOpen] = useState(false)
   const auth = useAuth()
   const resourcesState = useResources(auth.token)
@@ -32,6 +33,40 @@ export default function App() {
       admin.loadSection('estadisticas').catch(() => {})
     }
   }, [admin, auth.isAdmin, page])
+
+  useEffect(() => {
+    if (!resetTokenFromUrl) return
+    setPage('auth')
+    window.history.replaceState({}, document.title, window.location.pathname)
+  }, [resetTokenFromUrl])
+
+  const screen = useMemo(() => {
+    if (page === 'auth') {
+      return (
+        <AuthPage
+          key={`auth-${auth.sessionVersion}-${resetTokenFromUrl ? 'reset' : 'normal'}`}
+          auth={auth}
+          initialResetToken={resetTokenFromUrl}
+          onDone={() => {
+            setResetTokenFromUrl('')
+            setPage('home')
+          }}
+        />
+      )
+    }
+    if (page === 'admin' && auth.isAdmin) return <AdminDashboard admin={admin} onBack={() => setPage('home')} />
+    return (
+      <main>
+        <Hero
+          stats={resourcesState.stats}
+          onExplore={() => document.getElementById('library')?.scrollIntoView({ behavior: 'smooth' })}
+          onUpload={() => auth.isAuthenticated ? setUploadOpen(true) : setPage('auth')}
+        />
+        <BentoFeatures />
+        <LibrarySection resourcesState={resourcesState} />
+      </main>
+    )
+  }, [admin, auth, page, resetTokenFromUrl, resourcesState])
 
   // Show loading screen while auth is initializing
   if (!auth.authInitialized) {
@@ -50,22 +85,6 @@ export default function App() {
     )
   }
 
-  const screen = useMemo(() => {
-    if (page === 'auth') return <AuthPage auth={auth} onDone={() => setPage('home')} />
-    if (page === 'admin' && auth.isAdmin) return <AdminDashboard admin={admin} onBack={() => setPage('home')} />
-    return (
-      <main>
-        <Hero
-          stats={resourcesState.stats}
-          onExplore={() => document.getElementById('library')?.scrollIntoView({ behavior: 'smooth' })}
-          onUpload={() => auth.isAuthenticated ? setUploadOpen(true) : setPage('auth')}
-        />
-        <BentoFeatures />
-        <LibrarySection resourcesState={resourcesState} />
-      </main>
-    )
-  }, [admin, auth, page, resourcesState])
-
   return (
     <ErrorBoundary>
       <div className="min-h-screen text-white">
@@ -79,6 +98,7 @@ export default function App() {
           onUpload={() => auth.isAuthenticated ? setUploadOpen(true) : setPage('auth')}
           onLogout={() => {
             auth.logout()
+            setUploadOpen(false)
             setPage('home')
           }}
         />
@@ -87,7 +107,7 @@ export default function App() {
             {screen}
           </motion.div>
         </AnimatePresence>
-        <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} resourcesState={resourcesState} />
+        <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} resourcesState={resourcesState} resetKey={auth.sessionVersion} />
       </div>
     </ErrorBoundary>
   )

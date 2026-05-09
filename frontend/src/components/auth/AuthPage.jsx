@@ -1,7 +1,7 @@
 // components/auth/AuthPage.jsx
 // Página de autenticación con tabs de login, registro y recuperación de contraseña
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '../ui/Button'
 
 /*
@@ -12,22 +12,44 @@ import { Button } from '../ui/Button'
  * - 'reset-pass'  : formulario para ingresar token y nueva contraseña
  */
 
-export function AuthPage({ auth, onDone }) {
+const emptyLogin = { email: '', password: '' }
+const emptyRegister = { nombre: '', email: '', password: '' }
+
+export function AuthPage({ auth, onDone, initialResetToken = '' }) {
   // view controla qué formulario se muestra: login | register | reset-email | reset-pass
   const [view, setView] = useState('login')
-  const [loginForm, setLoginForm] = useState({ email: '', password: '' })
-  const [registerForm, setRegisterForm] = useState({ nombre: '', email: '', password: '' })
+  const [loginForm, setLoginForm] = useState(emptyLogin)
+  const [registerForm, setRegisterForm] = useState(emptyRegister)
   const [resetEmail, setResetEmail] = useState('')          // Email para solicitar reset
   const [resetToken, setResetToken] = useState('')            // Token recibido del backend
   const [resetPassword, setResetPassword] = useState('')      // Nueva contraseña
   const [resetStep, setResetStep] = useState('email')         // 'email' → 'token' → 'done'
   const [resetMessage, setResetMessage] = useState('')        // Mensaje de éxito/error del reset
 
+  function clearSensitiveForms() {
+    setLoginForm(emptyLogin)
+    setRegisterForm(emptyRegister)
+    setResetEmail('')
+    setResetToken('')
+    setResetPassword('')
+  }
+
+  useEffect(() => {
+    clearSensitiveForms()
+  }, [auth.sessionVersion])
+
+  useEffect(() => {
+    if (!initialResetToken) return
+    setView('reset-email')
+    setResetStep('token')
+    setResetToken(initialResetToken)
+    setResetMessage('Ingresa una nueva contraseña para completar el restablecimiento.')
+  }, [initialResetToken])
+
   // Cambia entre tabs de login/register limpiando el error de autenticación
   function switchView(newView) {
     setView(newView)
-    // Limpia el error al cambiar de vista para que no se acumulen mensajes viejos
-    auth.authError = ''
+    auth.clearAuthError()
     // Si volvemos a login, limpia el mensaje de reset también
     if (newView === 'login') {
       setResetStep('email')
@@ -39,7 +61,7 @@ export function AuthPage({ auth, onDone }) {
   async function submitLogin(event) {
     event.preventDefault()
     await auth.login(loginForm)
-    // Si login fue exitoso (no lanzó error), redirige al home
+    clearSensitiveForms()
     if (!auth.authError) onDone()
   }
 
@@ -47,6 +69,7 @@ export function AuthPage({ auth, onDone }) {
   async function submitRegister(event) {
     event.preventDefault()
     await auth.register(registerForm)
+    clearSensitiveForms()
     if (!auth.authError) onDone()
   }
 
@@ -56,9 +79,10 @@ export function AuthPage({ auth, onDone }) {
     setResetMessage('')
     try {
       const data = await auth.solicitarReset(resetEmail)
-      // Si el backend devuelve un reset_token, pasamos al paso de ingreso de token
       if (data.reset_token) {
-        setResetToken(data.reset_token) // Guardamos el token para facilitar el desarrollo
+        setResetToken(data.reset_token)
+        setResetStep('token')
+      } else {
         setResetStep('token')
       }
       setResetMessage(data.mensaje || 'Revisa tu correo para continuar.')
@@ -71,14 +95,16 @@ export function AuthPage({ auth, onDone }) {
   async function handleConfirmarReset(event) {
     event.preventDefault()
     setResetMessage('')
-    if (!resetToken || resetPassword.length < 6) {
-      setResetMessage('La contraseña debe tener mínimo 6 caracteres.')
+    if (!resetToken || resetPassword.length < 8) {
+      setResetMessage('La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número.')
       return
     }
     try {
       const data = await auth.confirmarReset(resetToken, resetPassword)
       setResetMessage(data.mensaje || 'Contraseña actualizada.')
       setResetStep('done')
+      clearSensitiveForms()
+      window.history.replaceState({}, document.title, window.location.pathname)
     } catch (error) {
       setResetMessage(error.message || 'Error al restablecer la contraseña.')
     }
@@ -138,16 +164,16 @@ export function AuthPage({ auth, onDone }) {
 
         {/* ─── LOGIN FORM ───────────────────────────────── */}
         {view === 'login' && (
-          <form className="mt-6 grid gap-4" onSubmit={submitLogin}>
+          <form className="mt-6 grid gap-4" onSubmit={submitLogin} autoComplete="off">
             <label className="grid gap-2 text-sm text-slate-300">Email
               <input className="field" type="email" required value={loginForm.email}
                 onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                placeholder="tu@email.com" />
+                placeholder="tu@email.com" autoComplete="off" />
             </label>
             <label className="grid gap-2 text-sm text-slate-300">Contraseña
               <input className="field" type="password" required value={loginForm.password}
                 onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                placeholder="Mínimo 6 caracteres" />
+                placeholder="Mínimo 6 caracteres" autoComplete="off" />
             </label>
             <Button className="btn-primary mt-2 w-full" disabled={auth.authLoading}>
               {auth.authLoading ? 'Entrando...' : 'Entrar'}
@@ -162,21 +188,21 @@ export function AuthPage({ auth, onDone }) {
 
         {/* ─── REGISTER FORM ────────────────────────────── */}
         {view === 'register' && (
-          <form className="mt-6 grid gap-4" onSubmit={submitRegister}>
+          <form className="mt-6 grid gap-4" onSubmit={submitRegister} autoComplete="off">
             <label className="grid gap-2 text-sm text-slate-300">Nombre completo
               <input className="field" required value={registerForm.nombre}
                 onChange={(e) => setRegisterForm({ ...registerForm, nombre: e.target.value })}
-                placeholder="Tu nombre" />
+                placeholder="Tu nombre" autoComplete="off" />
             </label>
             <label className="grid gap-2 text-sm text-slate-300">Email
               <input className="field" type="email" required value={registerForm.email}
                 onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                placeholder="tu@email.com" />
+                placeholder="tu@email.com" autoComplete="off" />
             </label>
             <label className="grid gap-2 text-sm text-slate-300">Contraseña
               <input className="field" type="password" required minLength={6} value={registerForm.password}
                 onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                placeholder="Mínimo 6 caracteres" />
+                placeholder="Mínimo 6 caracteres" autoComplete="new-password" />
             </label>
             <Button className="btn-primary mt-2 w-full" disabled={auth.authLoading}>
               {auth.authLoading ? 'Creando...' : 'Crear cuenta'}
@@ -186,12 +212,12 @@ export function AuthPage({ auth, onDone }) {
 
         {/* ─── SOLICITAR RESET (ingresar email) ─────────── */}
         {view === 'reset-email' && resetStep === 'email' && (
-          <form className="mt-6 grid gap-4" onSubmit={handleSolicitarReset}>
-            <p className="text-sm text-slate-400">Ingresa tu email registrado y te enviaremos un token para restablecer tu contraseña.</p>
+          <form className="mt-6 grid gap-4" onSubmit={handleSolicitarReset} autoComplete="off">
+            <p className="text-sm text-slate-400">Ingresa tu email registrado y te enviaremos instrucciones para restablecer tu contraseña.</p>
             <label className="grid gap-2 text-sm text-slate-300">Email
               <input className="field" type="email" required value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
-                placeholder="tu@email.com" />
+                placeholder="tu@email.com" autoComplete="off" />
             </label>
             <Button className="btn-primary mt-2 w-full" disabled={auth.authLoading}>
               {auth.authLoading ? 'Enviando...' : 'Enviar token'}
@@ -205,17 +231,17 @@ export function AuthPage({ auth, onDone }) {
 
         {/* ─── CONFIRMAR RESET (ingresar token + nueva pass) ─── */}
         {view === 'reset-email' && resetStep === 'token' && (
-          <form className="mt-6 grid gap-4" onSubmit={handleConfirmarReset}>
-            <p className="text-sm text-slate-400">Ingresa el token que recibiste y tu nueva contraseña.</p>
+          <form className="mt-6 grid gap-4" onSubmit={handleConfirmarReset} autoComplete="off">
+            <p className="text-sm text-slate-400">Ingresa el token recibido por correo y tu nueva contraseña.</p>
             <label className="grid gap-2 text-sm text-slate-300">Token de recuperación
               <input className="field" required value={resetToken}
                 onChange={(e) => setResetToken(e.target.value)}
-                placeholder="Token de 64 caracteres" />
+                placeholder="Token de recuperación" autoComplete="one-time-code" />
             </label>
             <label className="grid gap-2 text-sm text-slate-300">Nueva contraseña
-              <input className="field" type="password" required minLength={6} value={resetPassword}
+              <input className="field" type="password" required minLength={8} value={resetPassword}
                 onChange={(e) => setResetPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres" />
+                placeholder="Mínimo 8 caracteres" autoComplete="new-password" />
             </label>
             <Button className="btn-primary mt-2 w-full" disabled={auth.authLoading}>
               {auth.authLoading ? 'Restableciendo...' : 'Restablecer contraseña'}

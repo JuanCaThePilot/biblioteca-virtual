@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiDelete, apiGet, apiPatch } from '../services/api'
 
 export function useAdmin(token, isAdmin, refreshResources, refreshPublicStats) {
@@ -7,6 +7,15 @@ export function useAdmin(token, isAdmin, refreshResources, refreshPublicStats) {
   const [published, setPublished] = useState([])
   const [users, setUsers] = useState([])
   const [loadingAdmin, setLoadingAdmin] = useState(false)
+
+  useEffect(() => {
+    if (token && isAdmin) return
+    setAdminStats(null)
+    setPending([])
+    setPublished([])
+    setUsers([])
+    setLoadingAdmin(false)
+  }, [isAdmin, token])
 
   const guard = useCallback(() => {
     if (!token || !isAdmin) throw new Error('Necesitas permisos de administrador.')

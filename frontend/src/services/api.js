@@ -5,8 +5,8 @@ export function getApiBase() {
   if (envApi) return envApi.replace(/\/$/, '')
 
   const { hostname, port, protocol, origin } = window.location
-  if (port === '3000') return '/api'
-  if (hostname === 'localhost' || hostname === '127.0.0.1') return RENDER_API
+  if (['3000', '5173', '4173'].includes(port)) return '/api'
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return '/api'
   if (protocol.startsWith('http')) return `${origin}/api`
   return RENDER_API
 }

@@ -45,4 +45,4 @@ Performance notes:
 - `npm run build`: production build into `frontend/dist`.
 - `npm run preview`: preview built app.
 
-The Express backend serves `frontend/dist` when it exists, and falls back to `frontend/public` for compatibility.
+The Express backend serves `frontend/dist`. `frontend/public/index.html` is only a static build notice and no longer contains application/auth logic.

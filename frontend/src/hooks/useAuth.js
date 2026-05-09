@@ -6,6 +6,16 @@ import { apiGet, apiPost } from '../services/api'
 // Claves usadas en localStorage para persistir la sesión
 const TOKEN_KEY = 'bv_token'
 const USER_KEY = 'bv_user'
+const AUTH_CHANNEL = 'bv_auth'
+
+function removeSensitiveStorage() {
+  for (const storage of [localStorage, sessionStorage]) {
+    for (let index = storage.length - 1; index >= 0; index -= 1) {
+      const key = storage.key(index)
+      if (key?.startsWith('bv_')) storage.removeItem(key)
+    }
+  }
+}
 
 // Lee el usuario almacenado en localStorage, manejando errores de parseo
 function readUser() {
@@ -23,23 +33,33 @@ export function useAuth() {
   const [authError, setAuthError] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [authInitialized, setAuthInitialized] = useState(false) // Controla si ya se verificó la sesión
+  const [sessionVersion, setSessionVersion] = useState(0)
   const initialCheckDone = useRef(false) // Evita que refreshProfile se ejecute más de una vez
+  const channelRef = useRef(null)
 
   // Guarda el token y usuario en estado y localStorage
   const saveSession = useCallback((nextToken, nextUser) => {
     setToken(nextToken)
     setUser(nextUser)
+    setAuthError('')
+    setSessionVersion((value) => value + 1)
     localStorage.setItem(TOKEN_KEY, nextToken)
     localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
   }, [])
 
   // Cierra la sesión: limpia estado y localStorage
-  const logout = useCallback(() => {
+  const logout = useCallback((options = {}) => {
     setToken(null)
     setUser(null)
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
+    setAuthError('')
+    setSessionVersion((value) => value + 1)
+    removeSensitiveStorage()
+    if (options.broadcast !== false) {
+      channelRef.current?.postMessage({ type: 'logout' })
+    }
   }, [])
+
+  const clearAuthError = useCallback(() => setAuthError(''), [])
 
   // Refresca el perfil del usuario consultando el backend
   // Se ejecuta solo una vez al montar el componente
@@ -69,6 +89,27 @@ export function useAuth() {
     refreshProfile()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (!('BroadcastChannel' in window)) return undefined
+    const channel = new BroadcastChannel(AUTH_CHANNEL)
+    channelRef.current = channel
+    channel.onmessage = (event) => {
+      if (event.data?.type === 'logout') logout({ broadcast: false })
+    }
+    return () => {
+      channel.close()
+      channelRef.current = null
+    }
+  }, [logout])
+
+  useEffect(() => {
+    const onStorage = (event) => {
+      if (event.key === TOKEN_KEY && event.newValue === null) logout({ broadcast: false })
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [logout])
 
   // Inicia sesión con email y contraseña
   const login = useCallback(async ({ email, password }) => {
@@ -115,7 +156,7 @@ export function useAuth() {
     } finally {
       setAuthLoading(false)
     }
-  }, [])
+  }, [logout])
 
   // Confirma el restablecimiento con el token y la nueva contraseña
   const confirmarReset = useCallback(async (token, nueva_password) => {
@@ -123,6 +164,7 @@ export function useAuth() {
     setAuthError('')
     try {
       const data = await apiPost('/auth/confirmar-reset', { token, nueva_password })
+      logout()
       return data
     } catch (error) {
       setAuthError(error.message)
@@ -130,7 +172,7 @@ export function useAuth() {
     } finally {
       setAuthLoading(false)
     }
-  }, [])
+  }, [logout])
 
   // Memoriza el objeto retornado para evitar re-renderizados innecesarios
   return useMemo(() => ({
@@ -139,13 +181,15 @@ export function useAuth() {
     isAuthenticated: Boolean(token),
     isAdmin: user?.rol === 'admin',
     authInitialized,
+    sessionVersion,
     authError,
     authLoading,
     login,
     register,
     logout,
+    clearAuthError,
     refreshProfile,
     solicitarReset,
     confirmarReset
-  }), [authError, authInitialized, authLoading, login, logout, refreshProfile, register, solicitarReset, confirmarReset, token, user])
+  }), [authError, authInitialized, authLoading, clearAuthError, login, logout, refreshProfile, register, sessionVersion, solicitarReset, confirmarReset, token, user])
 }
