@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { apiGet, apiPost } from '../services/api'
 
 const TOKEN_KEY = 'bv_token'
@@ -17,6 +17,8 @@ export function useAuth() {
   const [user, setUser] = useState(readUser)
   const [authError, setAuthError] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
+  const [authInitialized, setAuthInitialized] = useState(false)
+  const initialCheckDone = useRef(false)
 
   const saveSession = useCallback((nextToken, nextUser) => {
     setToken(nextToken)
@@ -33,7 +35,10 @@ export function useAuth() {
   }, [])
 
   const refreshProfile = useCallback(async () => {
-    if (!token) return null
+    if (!token) {
+      setAuthInitialized(true)
+      return null
+    }
     try {
       const data = await apiGet('/auth/perfil', token)
       setUser(data.usuario)
@@ -42,12 +47,19 @@ export function useAuth() {
     } catch {
       logout()
       return null
+    } finally {
+      if (!initialCheckDone.current) {
+        initialCheckDone.current = true
+        setAuthInitialized(true)
+      }
     }
   }, [logout, token])
 
+  // Only run refreshProfile once on mount, using the ref guard
   useEffect(() => {
     refreshProfile()
-  }, [refreshProfile])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const login = useCallback(async ({ email, password }) => {
     setAuthLoading(true)
@@ -84,11 +96,12 @@ export function useAuth() {
     user,
     isAuthenticated: Boolean(token),
     isAdmin: user?.rol === 'admin',
+    authInitialized,
     authError,
     authLoading,
     login,
     register,
     logout,
     refreshProfile
-  }), [authError, authLoading, login, logout, refreshProfile, register, token, user])
+  }), [authError, authInitialized, authLoading, login, logout, refreshProfile, register, token, user])
 }

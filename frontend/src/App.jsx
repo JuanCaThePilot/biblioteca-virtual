@@ -13,6 +13,7 @@ import { useResources } from './hooks/useResources'
 import { SpotlightCard } from './components/motion/SpotlightCard'
 import { MotionSection, Reveal } from './components/motion/MotionSection'
 import { pageTransition } from './utils/motion'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
 export default function App() {
   const [page, setPage] = useState('home')
@@ -32,6 +33,23 @@ export default function App() {
     }
   }, [admin, auth.isAdmin, page])
 
+  // Show loading screen while auth is initializing
+  if (!auth.authInitialized) {
+    return (
+      <div className="min-h-screen bg-ink text-white flex items-center justify-center">
+        <AmbientBackground />
+        <div className="text-center">
+          <div className="inline-flex gap-2 mb-4">
+            <span className="h-3 w-3 rounded-full bg-violet animate-bounce" style={{ animationDelay: '0s' }} />
+            <span className="h-3 w-3 rounded-full bg-cyan animate-bounce" style={{ animationDelay: '0.15s' }} />
+            <span className="h-3 w-3 rounded-full bg-violet animate-bounce" style={{ animationDelay: '0.3s' }} />
+          </div>
+          <p className="text-sm text-slate-400 font-semibold">Inicializando sesión...</p>
+        </div>
+      </div>
+    )
+  }
+
   const screen = useMemo(() => {
     if (page === 'auth') return <AuthPage auth={auth} onDone={() => setPage('home')} />
     if (page === 'admin' && auth.isAdmin) return <AdminDashboard admin={admin} onBack={() => setPage('home')} />
@@ -49,27 +67,29 @@ export default function App() {
   }, [admin, auth, page, resourcesState])
 
   return (
-    <div className="min-h-screen text-white">
-      <AmbientBackground />
-      <Navbar
-        user={auth.user}
-        isAuthenticated={auth.isAuthenticated}
-        isAdmin={auth.isAdmin}
-        page={page}
-        onNavigate={setPage}
-        onUpload={() => auth.isAuthenticated ? setUploadOpen(true) : setPage('auth')}
-        onLogout={() => {
-          auth.logout()
-          setPage('home')
-        }}
-      />
-      <AnimatePresence mode="wait">
-        <motion.div key={page} {...pageTransition}>
-          {screen}
-        </motion.div>
-      </AnimatePresence>
-      <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} resourcesState={resourcesState} />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen text-white">
+        <AmbientBackground />
+        <Navbar
+          user={auth.user}
+          isAuthenticated={auth.isAuthenticated}
+          isAdmin={auth.isAdmin}
+          page={page}
+          onNavigate={setPage}
+          onUpload={() => auth.isAuthenticated ? setUploadOpen(true) : setPage('auth')}
+          onLogout={() => {
+            auth.logout()
+            setPage('home')
+          }}
+        />
+        <AnimatePresence mode="wait">
+          <motion.div key={page} {...pageTransition}>
+            {screen}
+          </motion.div>
+        </AnimatePresence>
+        <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} resourcesState={resourcesState} />
+      </div>
+    </ErrorBoundary>
   )
 }
 

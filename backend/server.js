@@ -7,8 +7,7 @@ const multer = require('multer');
 
 const app = express();
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
-const frontendPublicPath = path.join(__dirname, '../frontend/public');
-const frontendPath = require('fs').existsSync(frontendDistPath) ? frontendDistPath : frontendPublicPath;
+const frontendPath = frontendDistPath;
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { apiGet, apiUpload } from '../services/api'
 
 export function useResources(token) {
@@ -10,11 +10,16 @@ export function useResources(token) {
   const [uploadError, setUploadError] = useState('')
   const [uploadSuccess, setUploadSuccess] = useState('')
 
-  const fetchResources = useCallback(async (nextFilters = filters) => {
+  // Use a ref to always have access to the latest filters without stale closures
+  const filtersRef = useRef(filters)
+  filtersRef.current = filters
+
+  const fetchResources = useCallback(async (nextFilters) => {
+    const currentFilters = nextFilters || filtersRef.current
     setLoading(true)
-    const params = new URLSearchParams({ orden: nextFilters.orden || 'reciente' })
-    if (nextFilters.buscar) params.set('buscar', nextFilters.buscar)
-    if (nextFilters.categoria) params.set('categoria', nextFilters.categoria)
+    const params = new URLSearchParams({ orden: currentFilters.orden || 'reciente' })
+    if (currentFilters.buscar) params.set('buscar', currentFilters.buscar)
+    if (currentFilters.categoria) params.set('categoria', currentFilters.categoria)
 
     try {
       const data = await apiGet(`/recursos?${params.toString()}`)
@@ -23,7 +28,7 @@ export function useResources(token) {
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [])
 
   const fetchPublicStats = useCallback(async () => {
     const data = await apiGet('/recursos/estadisticas')
@@ -42,6 +47,7 @@ export function useResources(token) {
   const updateFilters = useCallback((patch) => {
     setFilters((current) => {
       const next = { ...current, ...patch }
+      // Pass the new filters directly to avoid stale closure
       fetchResources(next).catch(() => {})
       return next
     })

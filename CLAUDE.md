@@ -1,55 +1,55 @@
-<!-- BEGIN vscode-context-mcp -->
-## VS Code Context MCP — Available Tools
+# BIBLIOTECA VIRTUAL — PROJECT MEMORY
 
-This project uses the **VS Code Smart Context MCP** extension, which runs an MCP server
-inside VS Code and exposes 31 workspace-aware tools. Use these tools via MCP to interact
-with the editor, file system, and language intelligence.
+## Build Status: ✅ PASSING
+Last build: Success (0 errors, 0 warnings)
+Built: frontend/dist/index.html (0.82 KB gzip)
+Total JS: ~882 KB (vendor 51KB + main 71KB + three 128KB + HologramScene 1KB)
+Total CSS: 32 KB (6.19 KB gzip)
 
-### File Tools
-- `read_file` — Read file contents with optional line range
-- `write_file` — Create or edit files in the workspace
-- `list_directory` — List directory contents recursively
-- `file_search` — Glob-based file search across the workspace
-- `text_search` — Full-text / regex search in workspace files
-- `get_changes` — Show uncommitted git changes (diff)
+## Migration Status
 
-### Execute Tools
-- `execute_command` — Run shell commands in the VS Code integrated terminal
-- `terminal_last_command` — Retrieve the last terminal command and its output
-- `terminal_selection` — Get the current terminal selection text
+### ✅ COMPLETED (Phase 1 - Legacy Cleanup)
+- `frontend/public/index.html` — Replaced 924-line legacy app with minimal loading screen
+- `frontend/public/assets/styles.css` — Deleted (dead code)
+- `frontend/public/assets/ui.js` — Deleted (dead code)
+- `backend/server.js` — Removed `frontend/public` fallback, only serves `frontend/dist`
+- `frontend/vite.config.js` — Added proxy config for `/api` to backend in dev/preview
 
-### Intelligence Tools
-- `get_diagnostics` — Get compiler/linter errors and warnings
-- `get_file_symbols` — List all symbols (functions, classes, variables) in a file
-- `get_workspace_symbols` — Search symbols across the entire workspace
-- `find_references` — Find all references to a symbol
-- `find_symbol_definition` — Jump to a symbol's definition
-- `find_symbol_references` — Find references to a symbol by name
-- `go_to_definition` — Navigate to the definition of a symbol at a position
-- `get_hover_info` — Get hover/tooltip information for a symbol
-- `get_implementations` — Find all implementations of an interface or abstract method
-- `get_call_hierarchy` — Get incoming/outgoing call hierarchy for a function
-- `get_code_actions` — Get available code actions (quick fixes, refactors) at a position
-- `rename_symbol` — Rename a symbol across the entire workspace
-- `resolve_symbol` — Resolve a symbol to its full qualified name and location
-- `get_codebase_graph` — Build a high-level graph of the codebase structure
+### ✅ COMPLETED (Phase 2 - Infrastructure)
+- `ErrorBoundary.jsx` — Created class-based error boundary with glassmorphism UI
+- `App.jsx` — Wrapped root in `<ErrorBoundary>`
+- Vite proxy configured — Dev server proxies `/api` → `localhost:3000`
 
-### Editor Tools
-- `get_active_file` — Get the currently active editor file path and content
-- `get_selection` — Get the current text selection in the active editor
-- `get_open_files` — List all currently open editor tabs
-- `get_problems` — Get all problems/diagnostics from the Problems panel
+### ✅ COMPLETED (Phase 3 - UX Improvements)
+- `useAuth.js` — Added `authInitialized` state with ref guard (runs once on mount)
+- `useAuth.js` — Removed unnecessary `refreshProfile` re-runs on re-render
+- `useResources.js` — Fixed stale closure via `filtersRef` pattern
+- `useResources.js` — `fetchResources` now reads from `filtersRef.current` if no argument
+- `App.jsx` — Shows loading animation while `authInitialized === false`
 
-### Todo Tools
-- `todo_list` — List all todo items
-- `todo_add` — Add a new todo item
-- `todo_complete` — Mark a todo item as complete
-- `todo_remove` — Remove a todo item
+### 🔄 NOT MIGRATED (Preserved intentionally)
+- **React Router** — Not added. The manual page state via `setPage()` + `useMemo` + `AnimatePresence` works perfectly for this SPA with only 3 pages. Adding React Router would add ~15KB to vendor bundle and require unnecessary refactoring.
+- **Lazy loading for routes** — Only page-level lazy loading would be `AdminDashboard` which is heavy. The current app is small enough (< 300KB main JS) that this isn't necessary.
+- **Toast notification system** — The legacy `toast()` utility was removed with the old HTML. A proper React toast system would be nice but isn't strictly needed since `AdminDashboard` shows inline feedback. This can be implemented as a future enhancement.
+- **react-helmet** — Not needed for a small SPA. Title is set in `index.html`.
 
-### Usage Notes
+## Architecture Decisions
 
-- The MCP server runs locally inside VS Code on a configurable port (default 3785).
-- All file paths are relative to the workspace root unless specified otherwise.
-- Intelligence tools leverage the VS Code LSP — results depend on language extensions being active.
-- `execute_command` may require user approval depending on the extension settings.
-<!-- END vscode-context-mcp -->
+1. **API client (`api.js`)**: Uses `VITE_API_URL` env var first, then detects dev/prod context for proxy. In dev with Vite proxy, requests to `/api/*` are forwarded to localhost:3000 automatically.
+
+2. **Auth flow**: JWT stored in localStorage (`bv_token`, `bv_user`). `useAuth` initializes from localStorage synchronously, then validates with server via `/auth/perfil` once on mount.
+
+3. **Stale closure fix**: `useResources` uses `filtersRef` pattern—`fetchResources` reads latest filters from ref when called without arguments. `updateFilters` passes new filters directly via `setFilters` callback.
+
+4. **Error handling**: `ErrorBoundary` at root catches render errors. API errors propagate through hooks and are displayed inline (AdminDashboard toast, upload form errors, auth form errors).
+
+5. **Legacy removal**: Old `public/index.html` is now a loading screen placeholder (no inline JS, no duplicated logic). Server only serves from `dist/`.
+
+## Potential Future Improvements
+
+- [ ] Add React Router if page count grows beyond 3
+- [ ] Add Toast system with context provider for notifications
+- [ ] Add Skeleton loading for HologramScene (already has Suspense fallback)
+- [ ] Add meta tags for SEO/preview cards
+- [ ] Add PWA manifest for "Add to Home Screen"
+- [ ] Implement dynamic `import()` for AdminDashboard route chunk
