@@ -7,7 +7,9 @@ const multer = require('multer');
 
 const app = express();
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
-const frontendPath = frontendDistPath;
+const frontendPublicPath = path.join(__dirname, '../frontend/public');
+const frontendPath = require('fs').existsSync(frontendDistPath) ? frontendDistPath : frontendPublicPath;
+console.log('📁 Sirviendo frontend desde:', frontendPath);
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
@@ -44,7 +46,12 @@ app.use('/api/admin',    require('./routes/admin'));
 
 // Ruta raíz → envía el index.html del frontend
 app.get('/', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  const indexPath = path.join(frontendPath, 'index.html');
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.json({ mensaje: 'API Biblioteca Virtual funcionando. El frontend debe construirse con: cd frontend && npm run build' });
+  }
 });
 
 // ── MANEJO DE ERRORES ────────────────────────────────────────────
