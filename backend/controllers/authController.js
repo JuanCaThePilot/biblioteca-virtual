@@ -75,6 +75,29 @@ function signUserToken(usuario) {
   );
 }
 
+function isMissingTokenVersionColumn(error) {
+  return error?.code === '42703' && error?.message?.includes('token_version');
+}
+
+async function findUserForLogin(email) {
+  const result = await supabase
+    .from('usuarios')
+    .select('id, nombre, email, password_hash, rol, token_version')
+    .eq('email', email)
+    .single();
+
+  if (!isMissingTokenVersionColumn(result.error)) return result;
+
+  const fallback = await supabase
+    .from('usuarios')
+    .select('id, nombre, email, password_hash, rol')
+    .eq('email', email)
+    .single();
+
+  if (fallback.data) fallback.data.token_version = 0;
+  return fallback;
+}
+
 async function auditAuthEvent({ eventType, usuarioId = null, email = null, req, metadata = {} }) {
   try {
     await supabase.from('auth_audit_logs').insert([{
@@ -149,11 +172,7 @@ const login = async (req, res) => {
 
   try {
     // Buscar usuario por email en la base de datos
-    const { data: usuario, error } = await supabase
-      .from('usuarios')
-      .select('id, nombre, email, password_hash, rol, token_version')
-      .eq('email', email)
-      .single();
+    const { data: usuario, error } = await findUserForLogin(email);
 
     // Si no existe el email, devolver error 401 (mismo mensaje genérico por seguridad)
     if (error || !usuario)

@@ -4,6 +4,29 @@
 const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
 
+function isMissingTokenVersionColumn(error) {
+  return error?.code === '42703' && error?.message?.includes('token_version');
+}
+
+async function findUserForToken(id) {
+  const result = await supabase
+    .from('usuarios')
+    .select('id, nombre, email, rol, token_version')
+    .eq('id', id)
+    .single();
+
+  if (!isMissingTokenVersionColumn(result.error)) return result;
+
+  const fallback = await supabase
+    .from('usuarios')
+    .select('id, nombre, email, rol')
+    .eq('id', id)
+    .single();
+
+  if (fallback.data) fallback.data.token_version = 0;
+  return fallback;
+}
+
 // Middleware para rutas que requieren login
 const requireAuth = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -15,11 +38,7 @@ const requireAuth = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { data: usuario, error } = await supabase
-      .from('usuarios')
-      .select('id, nombre, email, rol, token_version')
-      .eq('id', decoded.id)
-      .single();
+    const { data: usuario, error } = await findUserForToken(decoded.id);
 
     if (error || !usuario) {
       return res.status(403).json({ error: 'Token inválido o expirado.' });
