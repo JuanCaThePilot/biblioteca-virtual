@@ -89,19 +89,21 @@ export default function App() {
     <ErrorBoundary>
       <div className="min-h-screen text-white">
         <AmbientBackground />
-        <Navbar
-          user={auth.user}
-          isAuthenticated={auth.isAuthenticated}
-          isAdmin={auth.isAdmin}
-          page={page}
-          onNavigate={setPage}
-          onUpload={() => auth.isAuthenticated ? setUploadOpen(true) : setPage('auth')}
-          onLogout={() => {
-            auth.logout()
-            setUploadOpen(false)
-            setPage('home')
-          }}
-        />
+        {page !== 'auth' && (
+          <Navbar
+            user={auth.user}
+            isAuthenticated={auth.isAuthenticated}
+            isAdmin={auth.isAdmin}
+            page={page}
+            onNavigate={setPage}
+            onUpload={() => auth.isAuthenticated ? setUploadOpen(true) : setPage('auth')}
+            onLogout={() => {
+              auth.logout()
+              setUploadOpen(false)
+              setPage('home')
+            }}
+          />
+        )}
         <AnimatePresence mode="wait">
           <motion.div key={page} {...pageTransition}>
             {screen}

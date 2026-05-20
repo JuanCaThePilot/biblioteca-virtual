@@ -32,7 +32,7 @@ export function useAuth() {
   const [user, setUser] = useState(readUser)
   const [authError, setAuthError] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
-  const [authInitialized, setAuthInitialized] = useState(false) // Controla si ya se verificó la sesión
+  const [authInitialized, setAuthInitialized] = useState(() => !localStorage.getItem(TOKEN_KEY) || Boolean(readUser())) // Controla si ya se verificó la sesión
   const [sessionVersion, setSessionVersion] = useState(0)
   const initialCheckDone = useRef(false) // Evita que refreshProfile se ejecute más de una vez
   const channelRef = useRef(null)
@@ -64,10 +64,15 @@ export function useAuth() {
   // Refresca el perfil del usuario consultando el backend
   // Se ejecuta solo una vez al montar el componente
   const refreshProfile = useCallback(async () => {
-    if (!token) {
+    if (!initialCheckDone.current) {
+      initialCheckDone.current = true
       setAuthInitialized(true)
+    }
+
+    if (!token) {
       return null
     }
+
     try {
       const data = await apiGet('/auth/perfil', token)
       setUser(data.usuario)
@@ -76,11 +81,6 @@ export function useAuth() {
     } catch {
       logout()
       return null
-    } finally {
-      if (!initialCheckDone.current) {
-        initialCheckDone.current = true
-        setAuthInitialized(true)
-      }
     }
   }, [logout, token])
 

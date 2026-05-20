@@ -62,7 +62,7 @@ export function AuthPage({ auth, onDone, initialResetToken = '' }) {
     event.preventDefault()
     await auth.login(loginForm)
     clearSensitiveForms()
-    if (!auth.authError) onDone()
+    onDone()
   }
 
   // ─── REGISTER ────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ export function AuthPage({ auth, onDone, initialResetToken = '' }) {
     event.preventDefault()
     await auth.register(registerForm)
     clearSensitiveForms()
-    if (!auth.authError) onDone()
+    onDone()
   }
 
   // ─── SOLICITAR TOKEN DE RESET ────────────────────────────────────
