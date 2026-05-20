@@ -8,7 +8,7 @@ create table if not exists public.usuarios (
   nombre text not null,
   email text not null unique,
   password_hash text not null,
-  rol text not null default 'usuario' check (rol in ('usuario', 'admin')),
+  rol text not null default 'usuario' check (rol in ('usuario', 'admin', 'superadmin')),
   token_version integer not null default 0 check (token_version >= 0),
   password_changed_at timestamptz,
   reset_token text,                          -- Legacy: ya no se usa para nuevos resets
@@ -27,6 +27,12 @@ alter table public.usuarios
 
 alter table public.usuarios
   add column if not exists reset_token_expires timestamptz;
+
+alter table public.usuarios
+  drop constraint if exists usuarios_rol_check;
+
+alter table public.usuarios
+  add constraint usuarios_rol_check check (rol in ('usuario', 'admin', 'superadmin'));
 
 create table if not exists public.password_reset_tokens (
   id uuid primary key default gen_random_uuid(),

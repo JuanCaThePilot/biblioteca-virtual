@@ -27,6 +27,10 @@ async function findUserForToken(id) {
   return fallback;
 }
 
+function normalizeRole(role) {
+  return String(role || '').trim().toLowerCase();
+}
+
 // Middleware para rutas que requieren login
 const requireAuth = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -53,8 +57,8 @@ const requireAuth = async (req, res, next) => {
       id: usuario.id,
       email: usuario.email,
       nombre: usuario.nombre,
-      role: usuario.rol,
-      rol: usuario.rol
+      role: normalizeRole(usuario.rol),
+      rol: normalizeRole(usuario.rol)
     };
     next();
   } catch (err) {
@@ -65,7 +69,7 @@ const requireAuth = async (req, res, next) => {
 // Middleware solo para administradores
 const requireAdmin = (req, res, next) => {
   requireAuth(req, res, () => {
-    if (req.user?.role !== 'admin') {
+    if (!['admin', 'superadmin'].includes(normalizeRole(req.user?.role))) {
       return res.status(403).json({ error: 'Solo los administradores pueden hacer esto.' });
     }
 
@@ -73,4 +77,13 @@ const requireAdmin = (req, res, next) => {
   });
 };
 
-module.exports = { requireAuth, requireAdmin };
+// Middleware solo para superadministradores
+const requireSuperAdmin = (req, res, next) => {
+  if (normalizeRole(req.user?.role) !== 'superadmin') {
+    return res.status(403).json({ error: 'Solo un superadministrador puede cambiar roles de usuario.' });
+  }
+
+  next();
+};
+
+module.exports = { requireAuth, requireAdmin, requireSuperAdmin };

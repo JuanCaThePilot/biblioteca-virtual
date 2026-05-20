@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiDelete, apiGet, apiPatch } from '../services/api'
 
-export function useAdmin(token, isAdmin, refreshResources, refreshPublicStats) {
+export function useAdmin(token, isAdmin, isSuperAdmin, refreshResources, refreshPublicStats) {
   const [adminStats, setAdminStats] = useState(null)
   const [pending, setPending] = useState([])
   const [published, setPublished] = useState([])
@@ -20,6 +20,11 @@ export function useAdmin(token, isAdmin, refreshResources, refreshPublicStats) {
   const guard = useCallback(() => {
     if (!token || !isAdmin) throw new Error('Necesitas permisos de administrador.')
   }, [isAdmin, token])
+
+  const superAdminGuard = useCallback(() => {
+    guard()
+    if (!isSuperAdmin) throw new Error('Solo un superadministrador puede cambiar roles.')
+  }, [guard, isSuperAdmin])
 
   const fetchAdminStats = useCallback(async () => {
     guard()
@@ -78,12 +83,12 @@ export function useAdmin(token, isAdmin, refreshResources, refreshPublicStats) {
   }, [fetchAdminStats, fetchPublished, guard, refreshPublicStats, refreshResources, token])
 
   const toggleUserRole = useCallback(async (id, rolActual) => {
-    guard()
+    superAdminGuard()
     const rol = rolActual === 'admin' ? 'usuario' : 'admin'
     const data = await apiPatch(`/admin/usuarios/${id}/rol`, { rol }, token)
     await fetchUsers()
     return data
-  }, [fetchUsers, guard, token])
+  }, [fetchUsers, superAdminGuard, token])
 
   const loadSection = useCallback(async (section) => {
     setLoadingAdmin(true)
@@ -103,6 +108,7 @@ export function useAdmin(token, isAdmin, refreshResources, refreshPublicStats) {
     pending,
     published,
     users,
+    isSuperAdmin,
     loadingAdmin,
     loadSection,
     fetchAdminStats,
@@ -122,6 +128,7 @@ export function useAdmin(token, isAdmin, refreshResources, refreshPublicStats) {
     fetchPending,
     fetchPublished,
     fetchUsers,
+    isSuperAdmin,
     loadSection,
     loadingAdmin,
     pending,

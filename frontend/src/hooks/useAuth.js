@@ -7,6 +7,11 @@ import { apiGet, apiPost } from '../services/api'
 const TOKEN_KEY = 'bv_token'
 const USER_KEY = 'bv_user'
 const AUTH_CHANNEL = 'bv_auth'
+const ADMIN_ROLES = ['admin', 'superadmin']
+
+function normalizeRole(role) {
+  return String(role || '').trim().toLowerCase()
+}
 
 function removeSensitiveStorage() {
   for (const storage of [localStorage, sessionStorage]) {
@@ -175,11 +180,14 @@ export function useAuth() {
   }, [logout])
 
   // Memoriza el objeto retornado para evitar re-renderizados innecesarios
+  const role = normalizeRole(user?.rol)
+
   return useMemo(() => ({
     token,
     user,
     isAuthenticated: Boolean(token),
-    isAdmin: user?.rol === 'admin',
+    isAdmin: ADMIN_ROLES.includes(role),
+    isSuperAdmin: role === 'superadmin',
     authInitialized,
     sessionVersion,
     authError,

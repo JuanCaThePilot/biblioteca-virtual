@@ -171,6 +171,8 @@ function PublishedTable({ items, admin, run, onEdit }) {
 }
 
 function UsersTable({ items, admin, run }) {
+  const canManageRoles = admin.isSuperAdmin
+
   return (
     <PanelTable title="Gestión de usuarios" empty="No hay usuarios." headers={['Nombre', 'Email', 'Rol', 'Registro', 'Acciones']}>
       {items.map((item) => (
@@ -180,9 +182,13 @@ function UsersTable({ items, admin, run }) {
           <Td><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs">{item.rol}</span></Td>
           <Td>{formatDate(item.created_at)}</Td>
           <Td>
-            <Button onClick={() => run(() => admin.toggleUserRole(item.id, item.rol))}>
-              <Users size={15} /> {item.rol === 'admin' ? 'Quitar admin' : 'Hacer admin'}
-            </Button>
+            {canManageRoles && item.rol !== 'superadmin' ? (
+              <Button onClick={() => run(() => admin.toggleUserRole(item.id, item.rol))}>
+                <Users size={15} /> {item.rol === 'admin' ? 'Quitar admin' : 'Hacer admin'}
+              </Button>
+            ) : (
+              <span className="text-xs text-slate-500">Solo SuperAdmin</span>
+            )}
           </Td>
         </tr>
       ))}

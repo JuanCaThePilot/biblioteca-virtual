@@ -24,6 +24,7 @@ export default function App() {
   const admin = useAdmin(
     auth.token,
     auth.isAdmin,
+    auth.isSuperAdmin,
     resourcesState.fetchResources,
     resourcesState.fetchPublicStats
   )

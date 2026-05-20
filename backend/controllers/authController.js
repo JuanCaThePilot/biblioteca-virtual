@@ -66,7 +66,7 @@ function signUserToken(usuario) {
     {
       id: usuario.id,
       email: usuario.email,
-      role: usuario.rol,
+      role: normalizeRole(usuario.rol),
       nombre: usuario.nombre,
       tokenVersion: usuario.token_version || 0
     },
@@ -77,6 +77,10 @@ function signUserToken(usuario) {
 
 function isMissingTokenVersionColumn(error) {
   return error?.code === '42703' && error?.message?.includes('token_version');
+}
+
+function normalizeRole(role) {
+  return String(role || '').trim().toLowerCase();
 }
 
 async function findUserForLogin(email) {
@@ -153,7 +157,7 @@ const register = async (req, res) => {
     res.status(201).json({
       mensaje: '¡Cuenta creada exitosamente!',
       token,
-      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: normalizeRole(usuario.rol) }
     });
 
   } catch (err) {
@@ -191,7 +195,7 @@ const login = async (req, res) => {
     res.json({
       mensaje: `¡Bienvenido, ${usuario.nombre}!`,
       token,
-      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: normalizeRole(usuario.rol) }
     });
 
   } catch (err) {
@@ -210,7 +214,7 @@ const perfil = async (req, res) => {
       .eq('id', req.user.id)
       .single();
 
-    res.json({ usuario });
+    res.json({ usuario: usuario ? { ...usuario, rol: normalizeRole(usuario.rol) } : usuario });
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener perfil.' });
   }

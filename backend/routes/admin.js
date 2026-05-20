@@ -12,9 +12,9 @@ const {
   cambiarRol,
   estadisticas
 } = require('../controllers/adminController');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requireSuperAdmin } = require('../middleware/auth');
 
-// Todas las rutas de admin requieren rol "admin"
+// Todas las rutas de admin requieren rol "admin" o "superadmin"
 router.use(requireAdmin);
 
 // GET    /api/admin/estadisticas          → Dashboard con números
@@ -41,7 +41,7 @@ router.delete('/recursos/:id/rechazar', rechazar);
 // GET    /api/admin/usuarios              → Ver todos los usuarios
 router.get('/usuarios', listarUsuarios);
 
-// PATCH  /api/admin/usuarios/:id/rol      → Cambiar rol de usuario
-router.patch('/usuarios/:id/rol', cambiarRol);
+// PATCH  /api/admin/usuarios/:id/rol      → Cambiar rol de usuario [superadmin]
+router.patch('/usuarios/:id/rol', requireSuperAdmin, cambiarRol);
 
 module.exports = router;

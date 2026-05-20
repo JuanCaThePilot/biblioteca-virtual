@@ -121,6 +121,17 @@ const cambiarRol = async (req, res) => {
   if (!['usuario', 'admin'].includes(rol))
     return res.status(400).json({ error: 'Rol inválido. Usa: usuario o admin.' });
 
+  const { data: usuario, error: findError } = await supabase
+    .from('usuarios')
+    .select('id, rol')
+    .eq('id', id)
+    .single();
+
+  if (findError || !usuario) return res.status(404).json({ error: 'Usuario no encontrado.' });
+  if (usuario.rol === 'superadmin') {
+    return res.status(403).json({ error: 'No puedes modificar el rol de un superadministrador desde el panel.' });
+  }
+
   const { error } = await supabase
     .from('usuarios')
     .update({ rol })
