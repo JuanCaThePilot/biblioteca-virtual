@@ -49,7 +49,7 @@ export function Navbar({ user, isAuthenticated, isAdmin, onNavigate, onUpload, o
     <motion.nav
       initial={{ y: -24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className={`fixed left-1/2 top-3 z-40 w-[calc(100%_-_16px)] max-w-[1180px] -translate-x-1/2 rounded-[1.5rem] border px-3 py-2 backdrop-blur-2xl transition sm:px-4 sm:py-3 ${
+      className={`fixed left-2 right-2 top-3 z-40 max-w-[1180px] rounded-[1.5rem] border px-3 py-2 backdrop-blur-2xl transition sm:left-3 sm:right-3 sm:px-4 sm:py-3 ${
         scrolled ? 'border-white/15 bg-slate-950/82 shadow-glass' : 'border-white/10 bg-slate-950/55'
       }`}
     >
