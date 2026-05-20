@@ -49,14 +49,14 @@ export function Navbar({ user, isAuthenticated, isAdmin, onNavigate, onUpload, o
     <motion.nav
       initial={{ y: -24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className={`fixed left-1/2 top-3 z-40 w-[min(1180px,calc(100%-24px))] -translate-x-1/2 rounded-[1.5rem] border px-4 py-3 backdrop-blur-2xl transition ${
+      className={`fixed left-1/2 top-3 z-40 w-[calc(100%-16px)] max-w-[1180px] -translate-x-1/2 rounded-[1.5rem] border px-3 py-2 backdrop-blur-2xl transition sm:px-4 sm:py-3 ${
         scrolled ? 'border-white/15 bg-slate-950/82 shadow-glass' : 'border-white/10 bg-slate-950/55'
       }`}
     >
       <div className="flex min-w-0 items-center justify-between gap-3">
         <button className="flex min-w-0 items-center gap-3 text-left" onClick={() => onNavigate('home')}>
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet to-cyan font-black shadow-glow">B</span>
-          <span className="hidden min-w-0 min-[390px]:block">
+          <span className="hidden min-w-0 sm:block">
             <strong className="block text-sm font-black text-white">BibliotecaTech</strong>
             <small className="hidden text-xs text-slate-400 sm:block">Ingeniería de Sistemas</small>
           </span>
@@ -69,9 +69,9 @@ export function Navbar({ user, isAuthenticated, isAdmin, onNavigate, onUpload, o
 
         <div className="flex shrink-0 items-center gap-1.5 lg:hidden sm:gap-2">
           {!isAuthenticated ? (
-            <Button className="btn-primary gap-2 px-3 text-xs sm:px-4 sm:text-sm" onClick={() => onNavigate('auth')}>
+            <Button className="btn-primary shrink gap-2 px-3 text-xs sm:px-4 sm:text-sm" onClick={() => onNavigate('auth')}>
               <LogIn size={15} className="shrink-0" />
-              <span className="whitespace-nowrap">Iniciar sesión</span>
+              <span className="hidden whitespace-nowrap min-[430px]:inline">Iniciar sesión</span>
             </Button>
           ) : (
             <>

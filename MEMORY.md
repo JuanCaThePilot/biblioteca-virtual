@@ -1,7 +1,7 @@
 # MEMORY.md — Biblioteca Virtual Project Memory
 
-> **Last Updated**: 2026-05-09T17:27 UTC-5
-> **Maintained by**: Principal Frontend Engineer + Full Stack Architect
+> **Last Updated**: 2026-05-09T14:14 UTC-5
+> **Maintained by**: Principal Software Engineer + DevOps + Security Engineer
 
 ---
 
@@ -11,209 +11,296 @@
 
 ### Tech Stack
 - **Frontend**: React 19.2.3 + Vite 7.3.3 + TailwindCSS 3.4.18 + Framer Motion 12.23.24 + Three.js 0.181.2
-- **Backend**: Express.js + Supabase (PostgreSQL + Storage)
-- **Auth**: JWT tokens with 7-day expiry
-- **Deployment**: Render.com (Node.js)
+- **Backend**: Express.js + Supabase (PostgreSQL + Storage) + JWT auth
+- **Auth**: JWT tokens with 7-day expiry, stored in localStorage
+- **Deployment**: Render.com (recommended: Static Site + Web Service)
 
 ---
 
-## 2. BUILD SYSTEM ANALYSIS
+## 2. MONOREPO STRUCTURE
 
-### Frontend Build Pipeline
+```
+biblioteca-virtual/                  ← root (NO package.json)
+├── frontend/                        ← React + Vite SPA
+│   ├── package.json                 ← Self-contained deps + build scripts
+│   ├── vite.config.js               ← Build config, dev proxy on :5173 → :3000
+│   ├── index.html                   ← Vite entry HTML
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── .gitignore                   ← Excludes node_modules, dist, .env
+│   ├── dist/                        ← Production build output (gitignored)
+│   ├── public/                      ← Legacy files (⚠️ dead code)
+│   │   ├── index.html               ← 924 lines vanilla JS (NOT served)
+│   │   └── assets/
+│   │       ├── styles.css           ← Dead code
+│   │       └── ui.js               ← Dead code
+│   └── src/
+│       ├── main.jsx                 ← React entry point
+│       ├── App.jsx                  ← Root component (page routing)
+│       ├── components/              ← UI components (auth, admin, landing, etc.)
+│       ├── hooks/                   ← useAuth, useResources, useAdmin
+│       ├── services/api.js          ← API client (dynamic base URL)
+│       ├── styles/index.css         ← Tailwind + custom CSS
+│       └── utils/                   ← Formatters, motion presets
+│
+├── backend/                         ← Express.js API
+│   ├── package.json                 ← Self-contained deps + scripts
+│   ├── server.js                    ← Entry point, CORS, static serving, routes
+│   ├── .env                         ← Local dev env vars (gitignored)
+│   ├── config/supabase.js           ← Supabase client singleton
+│   ├── middleware/auth.js           ← JWT auth + admin guard
+│   ├── controllers/                 ← Auth, Recursos, Admin controllers
+│   ├── routes/                      ← Express router definitions
+│   └── scripts/                     ← Smoke tests
+│
+├── database/
+│   └── schema.sql                   ← PostgreSQL schema + RLS
+│
+└── docs/
+    ├── architecture/PROJECT_MAP.md
+    ├── auth/AUTH_ARCHITECTURE.md
+    ├── security/SECURITY_AUDIT.md
+    ├── decisions/ADR-001-password-reset-security.md
+    ├── flows/PASSWORD_RECOVERY.md
+    ├── refactors/LOGOUT_CLEANUP.md
+    ├── memory/README.md
+    └── render/RENDER_DEPLOYMENT.md  ← NEW: Complete Render guide
+```
+
+---
+
+## 3. BUILD SYSTEM ANALYSIS
+
+### Frontend Build
 | Property | Value |
 |----------|-------|
 | Build tool | Vite 7.3.3 |
-| Build command | `vite build` |
-| Output directory | `frontend/dist/` |
-| Entry point | `frontend/index.html` → `/src/main.jsx` |
+| Command | `vite build` (via `npm run build`) |
+| Output | `frontend/dist/` |
+| Entry | `frontend/index.html` → `/src/main.jsx` |
 | Plugin | `@vitejs/plugin-react` |
-| CSS | TailwindCSS + PostCSS + Autoprefixer |
-| Chunk strategy | Manual: `vendor` (react, react-dom, framer-motion), `three` (three.js) |
-| Dev server | Port 5173 with `/api` proxy to localhost:3000 |
+| CSS | Tailwind + PostCSS + Autoprefixer |
+| Chunks | `vendor` (react/react-dom/framer-motion), `three`, app, HologramScene (lazy) |
 
-### Build Output (verified 2026-05-09)
+### Production Build Output (verified 2026-05-09)
 ```
 dist/index.html                         819 B
-dist/assets/index-BmtiavbS.js          233 KB  → Main app bundle
+dist/assets/index-BmtiavbS.js          233 KB  → App bundle
 dist/assets/index-DIQq39yc.css          32 KB   → Styles
 dist/assets/vendor-CbWc4KGq.js         153 KB   → React/ReactDOM/Framer Motion
-dist/assets/three-eewABaYN.js          499 KB   → Three.js
+dist/assets/three-eewABaYN.js          499 KB   → Three.js (lazy)
 dist/assets/HologramScene-Dy0xRfz-.js    2 KB   → Lazy-loaded HologramScene
 ```
 
-### Backend-Frontend Integration
-- `backend/server.js` checks `frontend/dist/index.html` existence (`frontendBuilt`)
-- If built: serves static files from `frontend/dist/`, sends `index.html` on `GET /`
-- If not built: returns JSON message directing user to run build
-- `backend/package.json` script `build:frontend`: `cd ../frontend && npm install && npm run build`
-
-### Build Status History
-| Date | Status | Notes |
-|------|--------|-------|
-| 2026-05-09 | ✅ SUCCESS | v2.0.0 build produced all expected artifacts |
+### Backend-Frontend Relationship
+- `backend/server.js` serves `frontend/dist/` as static files when they exist
+- `backend/server.js` line 52: If `dist/index.html` exists → serves React app
+- If not → returns JSON message: "Frontend not built"
+- Environment variables for Supabase are required at server start
 
 ---
 
-## 3. FILES ANALYZED (Complete Inventory)
+## 4. DEPLOYMENT ANALYSIS — ROOT CAUSE
 
-### Frontend Source (`frontend/src/`)
-| File | Purpose | Key Observations |
-|------|---------|-----------------|
-| `main.jsx` | React entry point | Creates root, renders `<App />` |
-| `App.jsx` | Root component | Page routing (home/auth/admin), error boundary, auth loading state |
-| `hooks/useAuth.js` | Auth hook | Login, register, logout, profile refresh, password reset |
-| `hooks/useResources.js` | Resources hook | CRUD operations, filters via ref pattern (stale closure fixed) |
-| `hooks/useAdmin.js` | Admin hook | Stats, pending, published, users, approve/reject/role management |
-| `services/api.js` | API client | Dynamic base URL detection, get/post/patch/delete/upload |
-| `styles/index.css` | Tailwind + custom | Aurora background, glass morphism, shimmer animations |
+### The Real Problem: Render Misconfiguration
 
-### Frontend Configuration
-| File | Status | Notes |
-|------|--------|-------|
-| `package.json` | ✅ Healthy | All deps resolved, correct versions |
-| `package-lock.json` | ✅ Locked | lockfileVersion 3 |
-| `vite.config.js` | ✅ Correct | Proxy, chunk splitting, build config |
-| `tailwind.config.js` | ✅ Correct | Custom colors (ink, violet, cyan), fonts, shadows |
-| `postcss.config.js` | ✅ Correct | Tailwind + Autoprefixer |
-| `index.html` | ✅ Correct | Vite entry point |
-| `.gitignore` | ✅ Correct | Excludes `node_modules`, `dist`, `.env` |
+The project is a **monorepo with NO root package.json**. The two subdirectories (`frontend/` and `backend/`) each have their own `package.json`. When deploying to Render:
 
-### Backend (`backend/`)
-| File | Status | Notes |
-|------|--------|-------|
-| `server.js` | ✅ Correct | Express with CORS, static serving, error handling |
-| `package.json` | ✅ Correct | Includes `build:frontend` script |
+1. **If Root Directory is not set**: Render looks for `package.json` in the repo root, doesn't find it, and fails
+2. **If you set Root Directory to `frontend`**: Only frontend builds, backend never starts
+3. **If you set Root Directory to `backend`**: Backend starts, but frontend isn't built
 
-### Legacy Files
-| File | Status | Notes |
-|------|--------|-------|
-| `frontend/public/index.html` | ⚠️ Legacy | 924 lines vanilla JS app, no longer served |
-| `frontend/public/assets/styles.css` | ⚠️ Dead code | Legacy styles, can be removed |
-| `frontend/public/assets/ui.js` | ⚠️ Dead code | Legacy JS, can be removed |
+### The Two Viable Deployment Strategies
+
+#### ✅ RECOMMENDED: Option B — Two Separate Render Services
+| Service | Type | Root Dir | Build | Publish |
+|---------|------|----------|-------|---------|
+| `biblioteca-backend` | Web Service | `backend` | `npm install` | N/A |
+| `biblioteca-frontend` | Static Site | `frontend` | `npm install && npm run build` | `dist` |
+
+#### ⚠️ Alternative: Option A — Single Web Service
+| Service | Type | Root Dir | Build |
+|---------|------|----------|-------|
+| `biblioteca-virtual` | Web Service | `backend` | `cd ../frontend && npm install && npm run build && cd ../backend && npm install` |
+
+### Why Option B is Better
+- Isolated build environments per Render best practices
+- Frontend rebuilds only on frontend changes
+- No monorepo path chaining
+- Separate logs for debugging
+- Independent scaling
 
 ---
 
-## 4. ROOT CAUSE ANALYSIS: "Frontend not built"
+## 5. FILES ANALYZED (30+ files)
 
-### Original Error
-The error "Frontend not built" is emitted by `backend/server.js` line 55:
-```js
-res.json({ mensaje: 'API Biblioteca Virtual funcionando. El frontend debe construirse con: cd frontend && npm run build' });
+### Frontend (16 files)
+- `frontend/src/main.jsx` — React entry
+- `frontend/src/App.jsx` — Root component with page routing
+- `frontend/src/hooks/useAuth.js` — JWT login/register/logout/reset
+- `frontend/src/hooks/useResources.js` — Resource CRUD + filters
+- `frontend/src/hooks/useAdmin.js` — Admin operations
+- `frontend/src/components/auth/AuthPage.jsx` — Auth UI
+- `frontend/src/components/ui/ErrorBoundary.jsx` — Render error boundary
+- `frontend/src/services/api.js` — API client with dynamic base URL
+- `frontend/src/styles/index.css` — Tailwind + custom CSS
+- `frontend/package.json` — Dependencies + scripts
+- `frontend/package-lock.json` — Lockfile (lockfileVersion 3)
+- `frontend/vite.config.js` — Build config + dev proxy
+- `frontend/tailwind.config.js` — Design tokens
+- `frontend/postcss.config.js` — PostCSS plugins
+- `frontend/index.html` — Vite entry HTML
+- `frontend/.gitignore` — Excludes dist, node_modules, .env
+
+### Backend (6 files)
+- `backend/server.js` — Express app, CORS, static serving
+- `backend/package.json` — Dependencies + build:frontend script
+- `backend/config/supabase.js` — Supabase client (env var validation)
+- `backend/middleware/auth.js` — JWT verification + admin guard
+- `backend/controllers/authController.js` — Auth business logic
+- `backend/routes/auth.js` — Auth route definitions
+
+### Configuration (4 files)
+- `CLAUDE.md` — AI assistant config
+- `AGENTS.md` — Agent instructions
+- `.mcp.json` — MCP server config
+- Literally zero Render/CI/CD config files
+
+### Documentation (7 files)
+- `docs/architecture/PROJECT_MAP.md`
+- `docs/auth/AUTH_ARCHITECTURE.md`
+- `docs/security/SECURITY_AUDIT.md`
+- `docs/decisions/ADR-001-password-reset-security.md`
+- `docs/flows/PASSWORD_RECOVERY.md`
+- `docs/refactors/LOGOUT_CLEANUP.md`
+- `docs/render/RENDER_DEPLOYMENT.md` (NEW)
+
+### Legacy (3 files — not served)
+- `frontend/public/index.html` — Dead code, 924 lines
+- `frontend/public/assets/styles.css` — Dead code
+- `frontend/public/assets/ui.js` — Dead code
+
+---
+
+## 6. ROOT CAUSE ANALYSIS DETAILED
+
+### Problem 1: dist/ didn't exist
+**Cause**: No one had run `npm run build` in `frontend/`
+**Fix**: Run the build command
+**Status**: ✅ FIXED
+
+### Problem 2: Static startup cache in server.js
+**Cause**: `server.js` used `const frontendBuilt = require('fs').existsSync(...)` which cached the build status at server start
+**Fix**: Replaced with `function isFrontendBuilt()` for dynamic per-request checking
+**Status**: ✅ FIXED
+
+### Problem 3: Render misconfiguration (separate services needed)
+**Cause**: The monorepo has no root `package.json`, but Render expects either:
+- A root `package.json` (for a single-service app)
+- Correct **Root Directory** setting per service
+**Status**: ⚠️ NEEDS USER ACTION — documented in `docs/render/RENDER_DEPLOYMENT.md`
+
+### Problem 4: CORS configuration
+**Cause**: `server.js` has hardcoded `allowedOrigins` — if frontend URL changes, must update
+**Status**: ⚠️ NEEDS USER ACTION — documented in deployment guide
+
+---
+
+## 7. SECURITY FINDINGS
+
+| Finding | Status | Severity |
+|---------|--------|----------|
+| JWT in localStorage (XSS risk) | Known, accepted | Medium |
+| Hardcoded `RENDER_API` in `api.js` line 1 | ⚠️ Needs env var override | Low |
+| CORS whitelist hardcoded | Acceptable | Low |
+| Service role key only server-side | ✅ Good | N/A |
+| Token version invalidation | ✅ Good | N/A |
+| Rate limiting process-local | Known limitation | Low |
+| No CSP headers | Acceptable for now | Low |
+| Legacy files not served | ✅ Good | N/A |
+
+---
+
+## 8. FIXES APPLIED
+
+| Date | File | Change | Reason |
+|------|------|--------|--------|
+| 2026-05-09 | `frontend/public/index.html` | Added `line-clamp: 2` | CSS compatibility warning |
+| 2026-05-09 | `backend/server.js` | Static `frontendBuilt` → dynamic `isFrontendBuilt()` | Allow build after server start without restart |
+| 2026-05-09 | `backend/server.js` | Removed `if (frontendBuilt)` guard on `express.static` | `express.static` handles missing dirs silently |
+| 2026-05-09 | `frontend/dist/` | Generated fresh production build | `npm run build` succeeded |
+| 2026-05-09 | `docs/render/RENDER_DEPLOYMENT.md` | Created | Complete Render deployment guide |
+| 2026-05-09 | `MEMORY.md` | Updated | Full project memory |
+
+---
+
+## 9. EXACT RENDER CONFIGURATION
+
+### FRONTEND — Static Site
+```
+Service Type:        Static Site
+Name:                biblioteca-frontend
+Root Directory:      frontend
+Build Command:       npm install && npm run build
+Publish Directory:   dist
+Node Version:        20
+
+Environment Variables:
+  VITE_API_URL = https://biblioteca-backend.onrender.com/api
 ```
 
-### Root Cause
-The `frontend/dist/` directory was **missing** or **incomplete**, causing `frontendBuilt` to be `false`. This means no one had run `cd frontend && npm run build` in the deployment environment or local development environment.
+### BACKEND — Web Service
+```
+Service Type:        Web Service
+Name:                biblioteca-backend
+Root Directory:      backend
+Build Command:       npm install
+Start Command:       npm start
+Node Version:        20
 
-### Why It Occurred
-1. The `frontend/.gitignore` file explicitly excludes `dist/` from version control
-2. On Render.com deployment, the backend's `build:frontend` script must run during build phase
-3. If the deployment pipeline skips the frontend build step, `dist/` won't exist
-4. Locally, developers must run `npm run build` in `frontend/` before starting the backend
-
-### Fix Applied (2026-05-09)
-1. ✅ **Built the frontend**: `cd frontend; npm run build` — succeeded in 2.80s, generated all 6 production artifacts
-2. ✅ **Fixed `server.js` dynamic detection**: Changed `const frontendBuilt` (cached at startup) → `function isFrontendBuilt()` (checked per-request)
-   - This means the frontend can be built while the server is running without requiring a restart
-   - `express.static()` is now applied unconditionally (it fails silently if directory doesn't exist)
-   - Root route `GET /` now uses the dynamic check to decide whether to send the HTML or the JSON message
-3. ✅ **Verified**: Backend serves React app at `localhost:3000/` and API endpoints still work
-
-### Key Files Changed
-| File | Change | Reason |
-|------|--------|--------|
-| `backend/server.js` | Static `frontendBuilt` → dynamic `isFrontendBuilt()` | Allow build after server start |
-| `backend/server.js` | Removed `if (frontendBuilt)` guard on express.static | express.static handles missing dirs silently |
-
-### Prevention
-1. Ensure Render.com build command runs: `cd frontend && npm install && npm run build`
-2. If server was already running before the build, no restart is needed (dynamic check)
-3. Document that backend expects `frontend/dist/` to exist
+Environment Variables (ALL REQUIRED):
+  SUPABASE_URL          = https://dipgtozhxncwxtpctxsu.supabase.co
+  SUPABASE_SERVICE_KEY  = <from Supabase Dashboard>
+  JWT_SECRET            = <generate a unique 64-char hex string>
+  NODE_ENV              = production
+  PORT                  = 3000 (Render sets this)
+```
 
 ---
 
-## 5. SECURITY FINDINGS
+## 10. RISKS & RECOMMENDATIONS
 
-### ✅ Good Practices
-- JWT stored in localStorage (industry-standard for SPAs)
-- CORS whitelist of known origins
-- Input escaping in API error messages
-- `api.js` properly handles authorization headers
-
-### ⚠️ Observations
-- `api.js` line 10: Falls back to `RENDER_API` constant hardcoded in source — okay for production but should use env var
-- No CSP headers configured (acceptable for current stage)
-- No XSS risk in React app (React escapes JSX by default)
-
----
-
-## 6. RISKS & RECOMMENDATIONS
-
-### Immediate Risks
+### Risks
 | Risk | Severity | Mitigation |
 |------|----------|------------|
-| Legacy `public/index.html` exists but unused | Low | Remove to avoid confusion |
-| No automated build verification in CI | Medium | Add smoke test that checks `dist/` exists |
+| Legacy `public/` files confuse developers | Low | Remove when confident |
+| CORS whitelist not updated after frontend URL change | Medium | Document in deployment guide |
+| JWT_SECRET is a placeholder | HIGH | Generate new one before production |
+| No Render config file checked into repo | Low | Add render.yaml if needed |
 
-### Recommended Improvements
-1. **Add build validation script** — Verify `dist/index.html` exists after build
-2. **Auto-build on backend start** — Have `server.js` auto-trigger frontend build if `dist/` missing
-3. **Remove legacy files** — Delete `frontend/public/index.html`, `styles.css`, `ui.js` (tracked in ARCHITECTURE.md issue #1/#2)
-4. **Add Render.yaml or Dockerfile** — Explicit deployment configuration
-
----
-
-## 7. ARCHITECTURE MAP
-
-```
-biblioteca-virtual/
-├── backend/                    # Express.js API
-│   ├── server.js               # Entry point
-│   ├── config/supabase.js      # Supabase client
-│   ├── middleware/auth.js      # JWT verification
-│   ├── controllers/            # Route handlers
-│   ├── routes/                 # Express routers
-│   └── scripts/                # Smoke tests
-│
-├── frontend/                   # React + Vite
-│   ├── index.html              # Vite entry HTML
-│   ├── vite.config.js          # Build config + proxy
-│   ├── tailwind.config.js      # Design tokens
-│   ├── dist/                   # Production build (gitignored)
-│   ├── src/
-│   │   ├── main.jsx            # React entry
-│   │   ├── App.jsx             # Root component
-│   │   ├── components/         # UI components
-│   │   │   ├── admin/          # AdminDashboard
-│   │   │   ├── auth/           # AuthPage
-│   │   │   ├── landing/        # Hero
-│   │   │   ├── layout/         # Navbar, AmbientBackground
-│   │   │   ├── motion/         # SpotlightCard, TiltCard, etc.
-│   │   │   ├── resources/      # LibrarySection, ResourceCard, UploadModal
-│   │   │   ├── three/          # HologramScene (lazy)
-│   │   │   └── ui/             # Button, Card, ErrorBoundary, etc.
-│   │   ├── hooks/              # useAuth, useResources, useAdmin
-│   │   ├── services/api.js     # API client
-│   │   └── styles/index.css    # Tailwind + custom CSS
-│   └── public/                 # ⚠️ Legacy files (not served)
-│
-├── database/
-│   └── schema.sql
-│
-├── docs/                       # Generated documentation
-├── CLAUDE.md                   # AI assistant instructions
-├── AGENTS.md                   # Agent instructions
-└── MEMORY.md                   # This file
-```
+### Recommendations
+1. **Generate new JWT_SECRET** before production: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+2. **Remove legacy files** after verifying no one depends on them
+3. **Delete `frontend/public/index.html`** when ready (tracked in migration Phase 1)
+4. **Add `VITE_API_URL`** to frontend env on Render
+5. **Verify CORS** after first production deploy
+6. **Consider adding CSP headers** for production hardening
 
 ---
 
-## 8. BUILD VERIFICATION CHECKLIST
+## 11. BUILD VERIFICATION CHECKLIST
 
 - [x] Frontend dependencies installed (`node_modules` exists)
-- [x] Vite build succeeds with 0 errors
-- [x] All 6 expected output artifacts generated
+- [x] Vite build succeeds with 0 errors (2.80s)
+- [x] All 6 expected production artifacts generated
 - [x] HTML entry point references correct asset paths
 - [x] Chunk splitting working (vendor, three, main, HologramScene)
 - [x] CSS bundle includes Tailwind classes
 - [x] Backend can detect and serve built frontend
-- [x] Build completed in acceptable time (3.00s)
+- [x] Dynamic build check works (no restart needed)
+- [x] API endpoints respond correctly
+- [x] Render deployment documented with exact values
+- [x] CORS configuration documented
+- [x] Environment variables documented
+- [x] Auth flow documented
+- [x] Security audit updated
