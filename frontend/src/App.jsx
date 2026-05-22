@@ -125,10 +125,10 @@ function BentoFeatures() {
   ]
 
   return (
-    <MotionSection className="section-shell py-12">
+    <MotionSection className="section-shell py-10 sm:py-12">
       <Reveal className="mb-8">
-        <p className="text-sm font-black uppercase tracking-[0.24em] text-cyan">Plataforma SaaS académica</p>
-        <h2 className="mt-3 max-w-3xl text-4xl font-black text-white sm:text-5xl">Un flujo moderno para publicar, revisar y descargar recursos.</h2>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan sm:text-sm sm:tracking-[0.24em]">Plataforma SaaS académica</p>
+        <h2 className="mt-3 max-w-3xl text-3xl font-black text-white sm:text-4xl lg:text-5xl">Un flujo moderno para publicar, revisar y descargar recursos.</h2>
       </Reveal>
       <div className="grid gap-4 lg:grid-cols-3">
         {items.map(([title, text, span], index) => (
@@ -138,7 +138,7 @@ function BentoFeatures() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ delay: index * 0.08 }}
-            className={`min-h-48 p-6 ${span}`}
+            className={`min-h-40 p-5 sm:min-h-48 sm:p-6 ${span}`}
           >
             <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gradient-to-br from-violet/30 to-cyan/10 blur-2xl" />
             <h3 className="relative text-xl font-black text-white">{title}</h3>

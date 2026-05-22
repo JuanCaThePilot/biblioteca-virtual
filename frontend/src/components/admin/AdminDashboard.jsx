@@ -42,26 +42,26 @@ export function AdminDashboard({ admin, onBack }) {
   }
 
   return (
-    <main className="section-shell min-h-screen pt-32">
-      <MotionSection as="div" className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+    <main className="section-shell min-h-screen pb-12 pt-28 sm:pt-32">
+      <MotionSection as="div" className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
           <Reveal>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan">Admin Console</p>
-            <h1 className="mt-2 text-4xl font-black text-white sm:text-5xl">Panel de administración</h1>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan sm:text-sm sm:tracking-[0.2em]">Admin Console</p>
+            <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl lg:text-5xl">Panel de administración</h1>
             <p className="mt-3 text-slate-400">Modera recursos, edita descripciones y administra usuarios.</p>
           </Reveal>
         </div>
-        <Button onClick={onBack}>Volver a biblioteca</Button>
+        <Button className="w-full sm:w-auto" onClick={onBack}>Volver a biblioteca</Button>
       </MotionSection>
 
       {toast && <div className="mb-5 rounded-2xl border border-white/10 bg-white/10 p-3 text-sm text-slate-200">{toast}</div>}
 
-      <div className="grid gap-5 lg:grid-cols-[240px_1fr]">
-        <motion.aside initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} className="glass h-max rounded-[1.75rem] p-3 lg:sticky lg:top-28">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[240px_1fr] lg:gap-5">
+        <motion.aside initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} className="glass no-scrollbar flex h-max gap-2 overflow-x-auto rounded-[1.5rem] p-2 lg:sticky lg:top-28 lg:block lg:rounded-[1.75rem] lg:p-3">
           {sections.map(([id, label]) => (
             <button
               key={id}
-              className={`mb-1 w-full rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${section === id ? 'bg-white/12 text-white shadow-inner' : 'text-slate-400 hover:bg-white/7 hover:text-white'}`}
+              className={`shrink-0 rounded-2xl px-4 py-3 text-center text-sm font-bold transition lg:mb-1 lg:w-full lg:text-left ${section === id ? 'bg-white/12 text-white shadow-inner' : 'text-slate-400 hover:bg-white/7 hover:text-white'}`}
               onClick={() => setSection(id)}
             >
               {label}
@@ -69,7 +69,7 @@ export function AdminDashboard({ admin, onBack }) {
           ))}
         </motion.aside>
 
-        <motion.section key={section} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-[2rem] p-5">
+        <motion.section key={section} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass min-w-0 rounded-[1.5rem] p-3 sm:rounded-[2rem] sm:p-5">
           {section === 'estadisticas' && <StatsPanel stats={admin.adminStats} />}
           {section === 'pendientes' && <PendingTable items={admin.pending} run={run} admin={admin} />}
           {section === 'recursos' && (
@@ -105,14 +105,14 @@ function StatsPanel({ stats }) {
   const top = stats?.topRecursos || []
   return (
     <div>
-      <h2 className="mb-5 text-2xl font-black text-white">Resumen general</h2>
-      <div className="grid gap-4 md:grid-cols-3">
+      <h2 className="mb-5 text-xl font-black text-white sm:text-2xl">Resumen general</h2>
+      <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Publicados" value={stats?.totalRecursos || 0} />
         <Stat label="Pendientes" value={stats?.pendientesCount || 0} />
         <Stat label="Usuarios" value={stats?.totalUsuarios || 0} />
       </div>
-      <h3 className="mb-4 mt-8 text-xl font-black text-white">Top recursos descargados</h3>
-      <div className="overflow-hidden rounded-[1.5rem] border border-white/10">
+      <h3 className="mb-4 mt-8 text-lg font-black text-white sm:text-xl">Top recursos descargados</h3>
+      <div className="-mx-1 overflow-x-auto rounded-[1.5rem] border border-white/10 sm:mx-0">
         <Table headers={['Recurso', 'Categoría', 'Descargas']}>
           {top.map((item) => (
             <tr key={`${item.nombre}-${item.categoria}`}>
@@ -200,8 +200,8 @@ function PanelTable({ title, headers, children, empty }) {
   const hasRows = Array.isArray(children) ? children.length > 0 : Boolean(children)
   return (
     <div>
-      <h2 className="mb-5 text-2xl font-black text-white">{title}</h2>
-      <div className="overflow-x-auto rounded-[1.5rem] border border-white/10">
+      <h2 className="mb-5 text-xl font-black text-white sm:text-2xl">{title}</h2>
+      <div className="-mx-1 overflow-x-auto rounded-[1.5rem] border border-white/10 sm:mx-0">
         <Table headers={headers}>
           {hasRows ? children : <tr><Td colSpan={headers.length}>{empty}</Td></tr>}
         </Table>
@@ -212,9 +212,9 @@ function PanelTable({ title, headers, children, empty }) {
 
 function Table({ headers, children }) {
   return (
-    <table className="min-w-full text-left text-sm">
+    <table className="min-w-[720px] text-left text-sm sm:min-w-full">
       <thead className="bg-white/[0.04] text-xs uppercase tracking-wider text-slate-500">
-        <tr>{headers.map((header) => <th key={header} className="px-4 py-3">{header}</th>)}</tr>
+        <tr>{headers.map((header) => <th key={header} className="px-3 py-3 sm:px-4">{header}</th>)}</tr>
       </thead>
       <tbody className="divide-y divide-white/10 text-slate-200">{children}</tbody>
     </table>
@@ -222,7 +222,7 @@ function Table({ headers, children }) {
 }
 
 function Td({ children, strong, colSpan }) {
-  return <td colSpan={colSpan} className={`px-4 py-4 align-top ${strong ? 'font-bold text-white' : ''}`}>{children}</td>
+  return <td colSpan={colSpan} className={`max-w-72 break-words px-3 py-4 align-top sm:px-4 ${strong ? 'font-bold text-white' : ''}`}>{children}</td>
 }
 
 function Small({ children }) {
@@ -233,7 +233,7 @@ function Stat({ label, value }) {
   return (
     <SpotlightCard className="p-5">
       <span className="text-xs font-black uppercase tracking-wider text-slate-500">{label}</span>
-      <AnimatedCounter value={value} className="mt-2 block text-4xl font-black text-white" />
+      <AnimatedCounter value={value} className="mt-2 block text-3xl font-black text-white sm:text-4xl" />
     </SpotlightCard>
   )
 }

@@ -16,27 +16,27 @@ export function Hero({ stats, onExplore, onUpload }) {
   const rotate = useTransform(scrollY, [0, 700], [0, -5])
 
   return (
-    <section className="section-shell grid min-h-screen items-center pt-28">
-      <div className="grid items-center gap-12 lg:grid-cols-[1.08fr_.92fr]">
-        <motion.div variants={stagger} initial="hidden" animate="visible">
-          <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 text-xs font-bold text-slate-200 backdrop-blur-xl">
+    <section className="section-shell grid min-h-[100svh] items-center pb-14 pt-28 sm:pb-16 lg:pt-32">
+      <div className="grid min-w-0 items-center gap-10 lg:grid-cols-[1.08fr_.92fr] lg:gap-12">
+        <motion.div variants={stagger} initial="hidden" animate="visible" className="min-w-0">
+          <motion.div variants={fadeUp} className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 text-xs font-bold leading-5 text-slate-200 backdrop-blur-xl">
             <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,.8)]" />
             Plataforma técnica conectada a Supabase
           </motion.div>
-          <motion.h1 variants={fadeUp} className="mt-6 max-w-4xl bg-gradient-to-b from-white via-slate-100 to-slate-500 bg-clip-text text-5xl font-black leading-[0.94] tracking-tight text-transparent sm:text-7xl lg:text-8xl">
+          <motion.h1 variants={fadeUp} className="mt-6 max-w-4xl bg-gradient-to-b from-white via-slate-100 to-slate-500 bg-clip-text text-4xl font-black leading-[0.98] tracking-tight text-transparent sm:text-6xl lg:text-7xl xl:text-8xl">
             Biblioteca virtual para recursos técnicos premium.
           </motion.h1>
-          <motion.p variants={fadeUp} className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+          <motion.p variants={fadeUp} className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:mt-6 sm:text-lg sm:leading-8">
             Centraliza scripts, instaladores, manuales y plantillas con autenticación, moderación administrativa, búsqueda avanzada y descargas desde Storage.
           </motion.p>
-          <motion.div variants={fadeUp} className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Magnetic>
-              <Button className="btn-primary min-h-14 px-6 text-base" onClick={onExplore}>
+          <motion.div variants={fadeUp} className="mt-8 grid gap-3 sm:flex sm:flex-row">
+            <Magnetic className="min-w-0">
+              <Button className="btn-primary min-h-12 w-full px-5 text-sm sm:min-h-14 sm:w-auto sm:px-6 sm:text-base" onClick={onExplore}>
                 Explorar recursos <ArrowRight className="transition group-hover:translate-x-1" size={18} />
               </Button>
             </Magnetic>
-            <Magnetic>
-              <Button className="min-h-14 px-6 text-base" onClick={onUpload}>
+            <Magnetic className="min-w-0">
+              <Button className="min-h-12 w-full px-5 text-sm sm:min-h-14 sm:w-auto sm:px-6 sm:text-base" onClick={onUpload}>
                 <UploadCloud size={18} /> Subir recurso
               </Button>
             </Magnetic>
@@ -48,8 +48,8 @@ export function Hero({ stats, onExplore, onUpload }) {
           </motion.div>
         </motion.div>
 
-        <motion.div variants={slideRight} initial="hidden" animate="visible" style={{ y, rotate }} className="relative min-h-[560px]">
-          <motion.div style={{ y: yDeep }} className="absolute inset-x-8 top-2 h-[30rem] rounded-full bg-cyan/10 blur-3xl" />
+        <motion.div variants={slideRight} initial="hidden" animate="visible" style={{ y, rotate }} className="relative min-h-[390px] min-w-0 sm:min-h-[500px] lg:min-h-[560px]">
+          <motion.div style={{ y: yDeep }} className="absolute inset-x-4 top-2 h-80 rounded-full bg-cyan/10 blur-3xl sm:inset-x-8 sm:h-[30rem]" />
           <Suspense fallback={<div className="absolute inset-8 rounded-full bg-violet/10 blur-3xl" />}>
             <HologramScene />
           </Suspense>
@@ -57,7 +57,7 @@ export function Hero({ stats, onExplore, onUpload }) {
           <motion.div
             animate={{ y: [0, -14, 0] }}
             transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
-            className="glass relative overflow-hidden rounded-[2rem] p-5"
+            className="glass relative overflow-hidden rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-5"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-violet/20 via-transparent to-cyan/10" />
             <div className="relative">
@@ -67,7 +67,7 @@ export function Hero({ stats, onExplore, onUpload }) {
                 <span className="h-3 w-3 rounded-full bg-emerald-300" />
                 <span className="ml-auto text-xs font-semibold text-slate-400">Dashboard Preview</span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 min-[420px]:grid-cols-3">
                 <Metric label="Recursos" value={stats.totalRecursos} />
                 <Metric label="Descargas" value={stats.totalDescargas} />
                 <Metric label="Usuarios" value={stats.totalUsuarios} />
@@ -88,18 +88,18 @@ export function Hero({ stats, onExplore, onUpload }) {
 
 function Metric({ label, value }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-slate-950/55 p-4">
+    <div className="min-w-0 rounded-3xl border border-white/10 bg-slate-950/55 p-3 sm:p-4">
       <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</span>
-      <AnimatedCounter value={value || 0} className="mt-2 block text-3xl font-black text-white" />
+      <AnimatedCounter value={value || 0} className="mt-2 block text-2xl font-black text-white sm:text-3xl" />
     </div>
   )
 }
 
 function PreviewItem({ icon, title, text }) {
   return (
-    <motion.div whileHover={{ x: 4 }} className="flex items-center gap-3 rounded-3xl border border-white/10 bg-slate-950/50 p-4">
+    <motion.div whileHover={{ x: 4 }} className="flex min-w-0 items-center gap-3 rounded-3xl border border-white/10 bg-slate-950/50 p-3 sm:p-4">
       <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet/25 to-cyan/15 text-cyan-100 ring-1 ring-white/10">{icon}</span>
-      <div>
+      <div className="min-w-0">
         <strong className="text-sm text-white">{title}</strong>
         <p className="text-xs text-slate-400">{text}</p>
       </div>

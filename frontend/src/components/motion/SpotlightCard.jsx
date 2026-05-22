@@ -17,7 +17,7 @@ export function SpotlightCard({ children, className = '', disabled = false, ...p
       onPointerMove={onPointerMove}
       whileHover={disabled ? undefined : { y: -7, scale: 1.01 }}
       transition={{ type: 'spring', stiffness: 180, damping: 18 }}
-      className={`group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.07] shadow-glass backdrop-blur-2xl ${className}`}
+      className={`group relative min-w-0 overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.07] shadow-glass backdrop-blur-2xl ${className}`}
       {...props}
     >
       <motion.div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" style={{ background }} />

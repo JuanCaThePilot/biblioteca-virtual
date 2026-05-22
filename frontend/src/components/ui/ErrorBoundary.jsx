@@ -17,8 +17,8 @@ export class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-ink text-white flex items-center justify-center p-4">
-          <div className="glass rounded-[2rem] p-8 max-w-lg w-full text-center">
+        <div className="min-h-screen bg-ink text-white flex items-center justify-center p-3 sm:p-4">
+          <div className="glass rounded-[1.5rem] p-5 max-w-lg w-full text-center sm:rounded-[2rem] sm:p-8">
             <div className="text-5xl mb-4">⚠️</div>
             <h1 className="text-2xl font-black text-white mb-2">Algo salió mal</h1>
             <p className="text-slate-400 mb-6 text-sm">

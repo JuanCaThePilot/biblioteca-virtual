@@ -161,7 +161,7 @@ export function useAuth() {
     } finally {
       setAuthLoading(false)
     }
-  }, [logout])
+  }, [])
 
   // Confirma el restablecimiento con el token y la nueva contraseña
   const confirmarReset = useCallback(async (token, nueva_password) => {
@@ -199,5 +199,5 @@ export function useAuth() {
     refreshProfile,
     solicitarReset,
     confirmarReset
-  }), [authError, authInitialized, authLoading, clearAuthError, login, logout, refreshProfile, register, sessionVersion, solicitarReset, confirmarReset, token, user])
+  }), [authError, authInitialized, authLoading, clearAuthError, login, logout, refreshProfile, register, role, sessionVersion, solicitarReset, confirmarReset, token, user])
 }

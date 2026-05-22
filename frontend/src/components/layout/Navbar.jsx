@@ -49,11 +49,11 @@ export function Navbar({ user, isAuthenticated, isAdmin, onNavigate, onUpload, o
     <motion.nav
       initial={{ y: -24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className={`fixed left-2 right-2 top-3 z-40 max-w-[1180px] rounded-[1.5rem] border px-3 py-2 backdrop-blur-2xl transition sm:left-3 sm:right-3 sm:px-4 sm:py-3 ${
+      className={`fixed inset-x-2 top-3 z-40 mx-auto w-[calc(100%-1rem)] max-w-[1180px] rounded-[1.25rem] border px-2.5 py-2 backdrop-blur-2xl transition sm:inset-x-3 sm:w-[calc(100%-1.5rem)] sm:rounded-[1.5rem] sm:px-4 sm:py-3 ${
         scrolled ? 'border-white/15 bg-slate-950/82 shadow-glass' : 'border-white/10 bg-slate-950/55'
       }`}
     >
-      <div className="flex min-w-0 items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
         <button className="flex min-w-0 items-center gap-3 text-left" onClick={() => onNavigate('home')}>
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet to-cyan font-black shadow-glow">B</span>
           <span className="hidden min-w-0 sm:block">
@@ -67,9 +67,9 @@ export function Navbar({ user, isAuthenticated, isAdmin, onNavigate, onUpload, o
           {desktopActions}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1.5 lg:hidden sm:gap-2">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 lg:hidden sm:gap-2">
           {!isAuthenticated ? (
-            <Button className="btn-primary shrink gap-2 px-3 text-xs sm:px-4 sm:text-sm" onClick={() => onNavigate('auth')}>
+            <Button className="btn-primary shrink px-3 text-xs sm:px-4 sm:text-sm" onClick={() => onNavigate('auth')}>
               <LogIn size={15} className="shrink-0" />
               <span className="hidden whitespace-nowrap min-[430px]:inline">Iniciar sesión</span>
             </Button>
@@ -88,7 +88,7 @@ export function Navbar({ user, isAuthenticated, isAdmin, onNavigate, onUpload, o
               </span>
               {isAdmin && (
                 <Button
-                  className={`h-10 w-10 px-0 ${page === 'admin' ? 'bg-white/15' : ''}`}
+                  className={`h-10 w-10 shrink-0 px-0 ${page === 'admin' ? 'bg-white/15' : ''}`}
                   onClick={() => onNavigate('admin')}
                   aria-label="Abrir panel de administración"
                   title="Panel Admin"
@@ -96,10 +96,10 @@ export function Navbar({ user, isAuthenticated, isAdmin, onNavigate, onUpload, o
                   <LayoutDashboard size={16} />
                 </Button>
               )}
-              <Button className="btn-primary h-10 w-10 px-0" onClick={onUpload} aria-label="Subir recurso" title="Subir recurso">
+              <Button className="btn-primary h-10 w-10 shrink-0 px-0" onClick={onUpload} aria-label="Subir recurso" title="Subir recurso">
                 <Upload size={16} />
               </Button>
-              <Button className="btn-danger h-10 w-10 px-0" onClick={onLogout} aria-label="Cerrar sesión" title="Salir">
+              <Button className="btn-danger h-10 w-10 shrink-0 px-0" onClick={onLogout} aria-label="Cerrar sesión" title="Salir">
                 <LogOut size={16} />
               </Button>
             </>

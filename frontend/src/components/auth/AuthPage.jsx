@@ -111,10 +111,10 @@ export function AuthPage({ auth, onDone, initialResetToken = '' }) {
   }
 
   return (
-    <main className="section-shell grid min-h-screen place-items-center pt-28">
-      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="glass w-full max-w-md rounded-[2rem] p-6">
+    <main className="section-shell grid min-h-[100svh] place-items-center py-24 sm:py-28">
+      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="glass w-full max-w-md rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6">
         <div>
-          <h1 className="text-3xl font-black text-white">BibliotecaTech</h1>
+          <h1 className="text-2xl font-black text-white sm:text-3xl">BibliotecaTech</h1>
           <p className="mt-2 text-sm text-slate-400">
             {view === 'login' ? 'Accede a recursos técnicos curados para ingeniería de sistemas.' :
              view === 'register' ? 'Crea tu cuenta y comienza a compartir recursos.' :
@@ -128,7 +128,7 @@ export function AuthPage({ auth, onDone, initialResetToken = '' }) {
             {['login', 'register'].map((item) => (
               <button
                 key={item}
-                className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                className={`rounded-full px-3 py-2 text-xs font-bold transition sm:px-4 sm:text-sm ${
                   view === item ? 'bg-gradient-to-r from-violet to-cyan text-white' : 'text-slate-400 hover:text-white'
                 }`}
                 onClick={() => switchView(item)}
@@ -148,7 +148,7 @@ export function AuthPage({ auth, onDone, initialResetToken = '' }) {
 
         {/* Mensajes del proceso de reset */}
         {resetMessage && (view === 'reset-email' || view === 'reset-pass') && (
-          <div className={`mt-5 rounded-2xl border p-3 text-sm font-medium ${
+          <div className={`mt-5 break-words rounded-2xl border p-3 text-sm font-medium ${
             resetStep === 'done'
               ? 'border-emerald-300/20 bg-emerald-500/15 text-emerald-100'
               : 'border-cyan-300/20 bg-cyan-500/15 text-cyan-100'
