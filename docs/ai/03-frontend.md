@@ -78,3 +78,17 @@ All HTTP calls go through `frontend/src/services/api.js`. `getApiBase()` resolve
 | JWT in localStorage | `useAuth.js` | Exposes session to XSS; accepted current tradeoff |
 | Large animation surface | layout/motion/three components | More GPU/CPU work, especially on low-power devices |
 | Manual inline feedback | `AdminDashboard`, `AuthPage`, `UploadModal` | No shared toast system; messages are local to components |
+
+## Latest Frontend Audit Notes
+
+Validated with `npm run lint` and `npm run build` in `frontend/`.
+
+Resolved frontend issues:
+
+- `App.jsx` no longer preloads admin stats; `AdminDashboard.jsx` is the single owner of active admin section loading.
+- `AdminDashboard.jsx` depends on stable `admin.loadSection` instead of the full `admin` object when loading active sections.
+- `AuthPage.jsx` catches login/register submission failures locally. `useAuth` still stores the backend error for display, but failed credentials no longer create unhandled promise rejections.
+- `HologramScene.jsx` now respects `prefers-reduced-motion` by rendering a static scene instead of continuing an animation loop for reduced-motion users.
+- `Hero.jsx` gates the lazy Three.js hologram behind a `lg` media query to avoid mobile/tablet loading cost.
+- `LibrarySection.jsx` debounces search filter API calls while keeping local typing immediate.
+- Bento feature card hover should remain immediate; do not pass delayed parent transitions into `SpotlightCard`.

@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, ShieldCheck, Sparkles, UploadCloud } from 'lucide-react'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { AnimatedCounter } from '../ui/AnimatedCounter'
 import { Button } from '../ui/Button'
 import { Magnetic } from '../motion/Magnetic'
@@ -14,6 +14,7 @@ export function Hero({ stats, onExplore, onUpload }) {
   const y = useTransform(scrollY, [0, 700], [0, 90])
   const yDeep = useTransform(scrollY, [0, 700], [0, 150])
   const rotate = useTransform(scrollY, [0, 700], [0, -5])
+  const showHologram = useDesktopHologram()
 
   return (
     <section className="section-shell grid min-h-[100svh] items-center pb-14 pt-28 sm:pb-16 lg:pt-32">
@@ -50,9 +51,13 @@ export function Hero({ stats, onExplore, onUpload }) {
 
         <motion.div variants={slideRight} initial="hidden" animate="visible" style={{ y, rotate }} className="relative min-h-[390px] min-w-0 sm:min-h-[500px] lg:min-h-[560px]">
           <motion.div style={{ y: yDeep }} className="absolute inset-x-4 top-2 h-80 rounded-full bg-cyan/10 blur-3xl sm:inset-x-8 sm:h-[30rem]" />
-          <Suspense fallback={<div className="absolute inset-8 rounded-full bg-violet/10 blur-3xl" />}>
-            <HologramScene />
-          </Suspense>
+          {showHologram ? (
+            <Suspense fallback={<div className="absolute inset-8 rounded-full bg-violet/10 blur-3xl" />}>
+              <HologramScene />
+            </Suspense>
+          ) : (
+            <div className="pointer-events-none absolute inset-8 rounded-full bg-violet/10 blur-3xl" aria-hidden="true" />
+          )}
           <TiltCard className="relative z-10">
           <motion.div
             animate={{ y: [0, -14, 0] }}
@@ -84,6 +89,20 @@ export function Hero({ stats, onExplore, onUpload }) {
       </div>
     </section>
   )
+}
+
+function useDesktopHologram() {
+  const [enabled, setEnabled] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)')
+    const update = () => setEnabled(media.matches)
+    update()
+    media.addEventListener?.('change', update)
+    return () => media.removeEventListener?.('change', update)
+  }, [])
+
+  return enabled
 }
 
 function Metric({ label, value }) {

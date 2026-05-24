@@ -43,6 +43,12 @@ The app now follows a stricter mobile-first layout strategy:
 | Auth page | Uses `100svh`, vertical padding, smaller card padding | Larger card padding/radius at `sm:` |
 | Upload modal | Compact file zone and stacked actions | Roomier file zone and right-aligned actions at `sm:` |
 
+## Responsive Performance Notes
+
+- The Three.js hologram is mounted only at `lg` and above. Smaller screens keep the hero shape with a lightweight glow fallback instead of loading/rendering the Three.js scene.
+- Resource search input updates immediately in the UI, but API filter requests are debounced by 280 ms to reduce network churn while typing.
+- Bento feature cards should not receive delayed `transition` props directly on `SpotlightCard`; shared delays affect hover timing. Use child animations for decorative delayed progress bars instead.
+
 ## Files Changed For Responsiveness
 
 - `frontend/src/styles/index.css`

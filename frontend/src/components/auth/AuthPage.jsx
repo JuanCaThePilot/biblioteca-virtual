@@ -60,17 +60,25 @@ export function AuthPage({ auth, onDone, initialResetToken = '' }) {
   // ─── LOGIN ───────────────────────────────────────────────────────
   async function submitLogin(event) {
     event.preventDefault()
-    await auth.login(loginForm)
-    clearSensitiveForms()
-    onDone()
+    try {
+      await auth.login(loginForm)
+      clearSensitiveForms()
+      onDone()
+    } catch {
+      // useAuth already stores the backend error in auth.authError for display.
+    }
   }
 
   // ─── REGISTER ────────────────────────────────────────────────────
   async function submitRegister(event) {
     event.preventDefault()
-    await auth.register(registerForm)
-    clearSensitiveForms()
-    onDone()
+    try {
+      await auth.register(registerForm)
+      clearSensitiveForms()
+      onDone()
+    } catch {
+      // useAuth already stores the backend error in auth.authError for display.
+    }
   }
 
   // ─── SOLICITAR TOKEN DE RESET ────────────────────────────────────

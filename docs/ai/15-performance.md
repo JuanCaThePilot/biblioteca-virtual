@@ -5,9 +5,9 @@
 | Area | Current State | Risk/Opportunity |
 |---|---|---|
 | Bundle splitting | Vite manual chunks: `vendor`, `three`; `HologramScene` lazy-loaded | Good baseline; admin route is not lazy-loaded |
-| Animations | Extensive Framer Motion plus Three.js scene | Can be heavy on low-end/mobile devices |
-| Reduced motion | Hook and CSS media query exist | Three.js loop still schedules every frame; reduced mode does not actually lower RAF frequency |
-| Resource loading | Fetch on mount and filter changes | Search input triggers request on every keystroke; add debounce |
+| Animations | Extensive Framer Motion plus desktop-only Three.js scene | Still watch low-end desktop GPU cost |
+| Reduced motion | Hook and CSS media query exist | Three.js renders a static frame in reduced-motion mode |
+| Resource loading | Fetch on mount and filter changes | Search input is debounced before API calls |
 | API caching | None | Repeated stats/resources fetches after actions can duplicate work |
 | Images/assets | No large raster assets in source scan | Good for bundle size |
 
@@ -24,9 +24,14 @@
 
 ## Suggested Optimizations
 
-1. Debounce frontend search requests by 250-400 ms.
-2. Add pagination controls wired to backend `pagina`.
-3. Replace download increment with a database RPC or atomic SQL update.
-4. Move public stats aggregation into SQL/RPC for large datasets.
-5. Lazy-load `AdminDashboard` if admin UI grows.
-6. Make Three.js reduced-motion mode render a static frame or slower loop.
+1. Add pagination controls wired to backend `pagina`.
+2. Replace download increment with a database RPC or atomic SQL update.
+3. Move public stats aggregation into SQL/RPC for large datasets.
+4. Lazy-load `AdminDashboard` if admin UI grows.
+5. Consider delaying non-critical ambient animations on very low-power devices.
+
+## Recent Frontend Optimizations
+
+- `Hero.jsx` only mounts the lazy `HologramScene` at `lg` and above. Mobile/tablet users get the lightweight glow fallback and avoid loading the large Three.js chunk during initial browsing.
+- `LibrarySection.jsx` keeps the search input responsive locally and debounces backend filter requests by 280 ms.
+- `App.jsx` Bento cards no longer pass delayed `transition` props into `SpotlightCard`, so hover response is immediate on every card.

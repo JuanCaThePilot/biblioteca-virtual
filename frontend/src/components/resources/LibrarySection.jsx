@@ -1,5 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { ResourceSkeleton } from '../ui/Skeleton'
 import { AnimatedCounter } from '../ui/AnimatedCounter'
 import { ResourceCard } from './ResourceCard'
@@ -10,6 +11,19 @@ const categories = ['', 'Diagnóstico', 'Redes', 'Programación', 'Mantenimiento
 
 export function LibrarySection({ resourcesState }) {
   const { resources, stats, filters, loading, updateFilters, downloadResource } = resourcesState
+  const [searchTerm, setSearchTerm] = useState(filters.buscar)
+
+  useEffect(() => {
+    setSearchTerm(filters.buscar)
+  }, [filters.buscar])
+
+  useEffect(() => {
+    if (searchTerm === filters.buscar) return undefined
+    const timeout = window.setTimeout(() => {
+      updateFilters({ buscar: searchTerm })
+    }, 280)
+    return () => window.clearTimeout(timeout)
+  }, [filters.buscar, searchTerm, updateFilters])
 
   return (
     <section id="library" className="section-shell py-14 sm:py-20">
@@ -28,7 +42,7 @@ export function LibrarySection({ resourcesState }) {
         <div className="glass mb-5 grid min-w-0 gap-3 rounded-[1.5rem] p-3 sm:rounded-[1.75rem] md:grid-cols-[1fr_220px]">
           <label className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-            <input className="field pl-11" value={filters.buscar} onChange={(e) => updateFilters({ buscar: e.target.value })} placeholder="Buscar recursos..." type="search" />
+            <input className="field pl-11" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar recursos..." type="search" />
           </label>
           <select className="field" value={filters.orden} onChange={(e) => updateFilters({ orden: e.target.value })}>
             <option value="reciente">Más recientes</option>

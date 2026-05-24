@@ -20,6 +20,9 @@
 | Shared design classes | `.glass`, `.btn`, `.field`, `.section-shell` |
 | Motion variants | `utils/motion.js` |
 | API through service layer | Hooks import from `services/api.js` |
+| Effect dependencies | Depend on specific stable callbacks/primitives, not aggregate hook objects |
+| Expected form failures | Catch submit errors locally and render hook-owned error state |
+| Hover animations | Do not pass delayed parent `transition` props into reusable hover cards |
 
 ## Responsive Frontend Conventions
 
@@ -44,6 +47,8 @@
 | JSON error body | `{ error: '...' }` |
 | JSON success message | `{ mensaje: '...' }` |
 
+The backend intentionally stays on CommonJS because `backend/package.json` has no `"type": "module"` and routes/controllers use `require`/`module.exports` consistently. VS Code's automatic "convert to ES module" suggestion is disabled at the workspace level through `.vscode/settings.json`; do not migrate a single backend file to ESM in isolation.
+
 ## Documentation Rules
 
 - Update `docs/ai` whenever architecture, routes, env vars, auth, schema, or flows change.
@@ -57,3 +62,7 @@
 - Keep frontend API calls centralized in `services/api.js`.
 - Keep role checks server-side even if frontend hides UI.
 - Keep auth cleanup clearing all `bv_` storage keys unless key naming changes intentionally.
+- Preserve `prefers-reduced-motion` behavior when editing Framer Motion or Three.js components.
+- Avoid effect dependency patterns that can loop after state refreshes, especially with objects returned from `useAdmin`, `useResources`, or `useAuth`.
+- Keep heavy visual modules such as Three.js gated or lazy-loaded on small screens unless the feature explicitly requires them.
+- Debounce search-like API calls in the UI layer when users can type rapidly.

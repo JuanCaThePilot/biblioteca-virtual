@@ -53,9 +53,13 @@ flowchart TD
 - `useResources` uses `filtersRef` so `fetchResources()` can read latest filters without stale closures.
 - `useAuth` uses `sessionVersion` to force sensitive form reset after login/logout/reset.
 - Logout broadcasts through `BroadcastChannel` and listens for localStorage changes as fallback.
+- When a hook returns an aggregate object, effects should depend on stable callbacks or primitive state, not the whole object. `AdminDashboard.jsx` intentionally depends on `loadSection` instead of `admin` to avoid reload loops after admin state updates.
+- `AdminDashboard.jsx` owns active admin section loading; `App.jsx` should not duplicate that fetch when navigating to `page === 'admin'`.
+- Auth form submissions catch expected login/register failures in `AuthPage.jsx`; the displayed error still comes from `useAuth.authError`.
 
 ## Risk Areas
 
 - `useAdmin` receives refresh callbacks from `useResources`; changing their identity can cause extra reloads.
 - Manual page state makes deep-linking and browser back/forward behavior limited.
 - API fetches are hand-rolled; there is no request deduplication, caching library, retry, or cancellation.
+- Avoid adding object-wide hook dependencies such as `[admin]` or `[resourcesState]` to effects that perform network requests. Prefer specific stable callbacks like `[loadSection]`, `[fetchResources]`, or `[fetchPublicStats]`.

@@ -25,6 +25,9 @@
 - `ErrorBoundary` exists and wraps the app.
 - `useResources` stale closure is fixed with `filtersRef`.
 - `useAuth` has auth initialization/loading state.
+- Admin section loading now lives only in `AdminDashboard.jsx` and no longer depends on the entire `admin` object, preventing duplicate or repeated section reloads after admin state changes.
+- Login/register submit handlers catch expected auth failures and rely on `auth.authError` for UI feedback.
+- Three.js hologram now renders statically for users with `prefers-reduced-motion`.
 
 ## Documentation Debt
 

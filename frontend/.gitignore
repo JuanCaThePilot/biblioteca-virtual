@@ -3,3 +3,6 @@ dist
 .env
 .env.local
 .graphrepo/model-cache/
+.claude
+.opencode
+.docs

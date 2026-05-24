@@ -20,10 +20,11 @@ export function AdminDashboard({ admin, onBack }) {
   const [toast, setToast] = useState('')
   const [editing, setEditing] = useState(null)
   const [description, setDescription] = useState('')
+  const { loadSection } = admin
 
   useEffect(() => {
-    admin.loadSection(section).catch((error) => setToast(error.message))
-  }, [admin, section])
+    loadSection(section).catch((error) => setToast(error.message))
+  }, [loadSection, section])
 
   async function run(action) {
     try {

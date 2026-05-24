@@ -12,6 +12,12 @@ npm start
 
 Expected startup logs include server port and frontend build status.
 
+## VS Code CommonJS Hint In Backend
+
+If VS Code suggests that `backend/server.js` can be converted to an ES module, treat it as an editor suggestion, not a runtime error. The backend is intentionally CommonJS across `server.js`, routes, controllers, middleware, and config files.
+
+The workspace disables JavaScript suggestion actions in `.vscode/settings.json` so this hint does not pollute Problems. Do not add `"type": "module"` or convert one backend file unless the entire backend module system is migrated deliberately.
+
 ## Frontend Shows API Errors
 
 1. Verify backend is running on port 3000.
@@ -50,6 +56,23 @@ Expected startup logs include server port and frontend build status.
 - User role must be `admin` or `superadmin` in `usuarios.rol`.
 - `useAuth.refreshProfile()` updates the cached role from the backend once on mount.
 - Existing JWT role is not trusted alone; middleware reads the current DB user.
+
+## Admin Panel Keeps Reloading
+
+- Check effect dependencies in `App.jsx` and `AdminDashboard.jsx`.
+- Effects that call `loadSection()` should depend on the stable `loadSection` callback plus primitive flags such as `page` or `section`.
+- Do not depend on the full `admin` object for section-loading effects; admin state changes replace that aggregate object and can trigger repeated API calls.
+- `AdminDashboard.jsx` should be the single owner of active admin section loading. Reintroducing an admin preload effect in `App.jsx` can duplicate the first dashboard request.
+
+## Login/Register Shows Console Promise Errors
+
+- Expected credential/validation failures should be caught in `AuthPage.jsx`.
+- `useAuth.login()` and `useAuth.register()` intentionally throw after setting `authError`; submit handlers should catch those errors and let the UI render `auth.authError`.
+
+## Reduced Motion Still Animates
+
+- `HologramScene.jsx` should render a static Three.js scene when `usePrefersReducedMotion()` returns true.
+- If animation continues for reduced-motion users, inspect the `animate()` loop before changing global motion variants.
 
 ## Password Reset Email Not Delivered
 

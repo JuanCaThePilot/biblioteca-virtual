@@ -30,12 +30,6 @@ export default function App() {
   )
 
   useEffect(() => {
-    if (page === 'admin' && auth.isAdmin) {
-      admin.loadSection('estadisticas').catch(() => {})
-    }
-  }, [admin, auth.isAdmin, page])
-
-  useEffect(() => {
     if (!resetTokenFromUrl) return
     setPage('auth')
     window.history.replaceState({}, document.title, window.location.pathname)
@@ -137,7 +131,6 @@ function BentoFeatures() {
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ delay: index * 0.08 }}
             className={`min-h-40 p-5 sm:min-h-48 sm:p-6 ${span}`}
           >
             <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gradient-to-br from-violet/30 to-cyan/10 blur-2xl" />

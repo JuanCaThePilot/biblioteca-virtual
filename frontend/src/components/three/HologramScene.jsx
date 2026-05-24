@@ -60,7 +60,6 @@ export function HologramScene() {
     rim.position.set(2.4, -1.4, 2.8)
     scene.add(rim)
 
-    let frame = 0
     let raf = 0
     const clock = new THREE.Clock()
 
@@ -70,11 +69,16 @@ export function HologramScene() {
       renderer.setSize(width, height, false)
       camera.aspect = width / height
       camera.updateProjectionMatrix()
+      if (reduced) renderer.render(scene, camera)
     }
 
     function animate() {
+      if (reduced) {
+        renderer.render(scene, camera)
+        return
+      }
+
       const elapsed = clock.getElapsedTime()
-      frame += 1
       mesh.rotation.x = elapsed * 0.18
       mesh.rotation.y = elapsed * 0.32
       wire.rotation.copy(mesh.rotation)
@@ -84,8 +88,7 @@ export function HologramScene() {
       })
       group.position.y = Math.sin(elapsed * 1.15) * 0.09
       renderer.render(scene, camera)
-      if (!reduced || frame % 4 === 0) raf = requestAnimationFrame(animate)
-      else raf = requestAnimationFrame(animate)
+      raf = requestAnimationFrame(animate)
     }
 
     resize()
