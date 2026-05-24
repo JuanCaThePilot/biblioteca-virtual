@@ -1,4 +1,7 @@
 .claude/
-.graphrepo/
 .opencode/
 docs/
+AGENTS.md
+CLAUDE.md
+MEMORY.md
+.gitignore
