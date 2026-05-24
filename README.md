@@ -32,8 +32,3 @@ biblioteca-virtual/
 
 ---
 
-
-
-**Error: "supabaseUrl is required"**
-→ Verifica que el archivo `.env` esté en la carpeta `backend/`
-  y que tenga los valores correctos (sin espacios ni comillas extra)
